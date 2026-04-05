@@ -1,0 +1,3261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="copyright" content="© 2026 刘奕博 版权所有">
+    <title>MentorViz - 导师-院系关系可视化工具</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /*
+        教师-院系关系可视化工具
+        版权所有 © 2026 刘奕博
+        保留所有权利
+        联系邮箱：liuyibo_double@163.com
+        */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .container {
+            width: 100%;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #3498db;
+            font-size: 2em;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            padding: 5px;
+        }
+
+        .controls {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .notepad {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .notepad h3 {
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        .notepad textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            resize: vertical;
+        }
+        
+        .notepad-buttons {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid #2ecc71;
+            border-radius: 4px;
+            padding: 5px 10px;
+            margin-bottom: 5px;
+        }
+        
+        .control-group.help-group {
+            border: none;
+            padding: 0;
+            margin-bottom: 5px;
+        }
+
+        input, select, button {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        .visualization {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: relative;
+            min-height: 1500px; /* 增加最小高度 */
+            width: 100%; /* 宽度100% */
+            max-width: 100%; /* 最大宽度100% */
+            overflow: hidden; /* 隐藏溢出，限制在白板内 */
+        }
+
+
+
+        body, html {
+            height: auto;
+            margin: 0;
+            overflow: auto;
+        }
+
+        .container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .visualization {
+            flex: 1;
+            min-height: 1500px;
+        }
+
+        /* 确保教师列表没有滚动条 */
+        .teacher-list {
+            overflow: visible;
+            max-height: none;
+        }
+
+        .faculty-box {
+            position: absolute;
+            border: 2px solid #3498db;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            cursor: move;
+            transition: all 0.3s;
+            resize: both;
+            overflow-y: auto;
+            overflow-x: hidden;
+            z-index: 10;
+            padding: 10px;
+        }
+
+        .faculty-box:hover {
+            box-shadow: 0 0 15px rgba(52, 152, 219, 0.5);
+        }
+
+        .resize-handle {
+            position: absolute;
+            background-color: #3498db;
+        }
+
+        /* 四个角的调整手柄 */
+        .resize-handle.corner {
+            width: 10px;
+            height: 10px;
+        }
+
+        .resize-handle.top-left {
+            top: -5px;
+            left: -5px;
+            cursor: nwse-resize;
+        }
+
+        .resize-handle.top-right {
+            top: -5px;
+            right: -5px;
+            cursor: nesw-resize;
+        }
+
+        .resize-handle.bottom-left {
+            bottom: -5px;
+            left: -5px;
+            cursor: nesw-resize;
+        }
+
+        .resize-handle.bottom-right {
+            bottom: -5px;
+            right: -5px;
+            cursor: nwse-resize;
+        }
+
+        /* 四个边的调整手柄 */
+        .resize-handle.edge {
+            width: 100%;
+            height: 10px;
+            left: 0;
+            margin-left: -5px;
+            cursor: ns-resize;
+        }
+
+        .resize-handle.top {
+            top: -5px;
+        }
+
+        .resize-handle.bottom {
+            bottom: -5px;
+        }
+
+        .resize-handle.left {
+            width: 10px;
+            height: 100%;
+            top: 0;
+            left: -5px;
+            margin-left: 0;
+            margin-top: -5px;
+            cursor: ew-resize;
+        }
+
+        .resize-handle.right {
+            width: 10px;
+            height: 100%;
+            top: 0;
+            right: -5px;
+            margin-top: -5px;
+            cursor: ew-resize;
+        }
+
+        .faculty-name {
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-align: center;
+            z-index: 10;
+        }
+
+        .teacher-list {
+            width: 90%;
+            text-align: center;
+            z-index: 20;
+            position: relative;
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            margin-top: 10px;
+            min-height: 0;
+        }
+
+        .teacher-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 5px;
+            margin: 2px 0;
+            background-color: rgba(255,255,255,0.8);
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .teacher-item:hover {
+            background-color: rgba(255,255,255,1);
+        }
+
+        .teacher-name {
+            flex: 1;
+            text-align: left;
+        }
+
+        .teacher-info-btn {
+            background: none;
+            border: none;
+            color: #3498db;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 0 5px;
+        }
+
+        .teacher-info-btn:hover {
+            color: #2980b9;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 8px;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .faculty-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 5px;
+        }
+        
+        /* 自定义下拉列表样式 */
+        .custom-dropdown {
+            position: relative;
+            display: inline-block;
+            min-width: 200px;
+        }
+        
+        .dropdown-header {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: white;
+        }
+        
+        .dropdown-header:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .dropdown-arrow {
+            font-size: 10px;
+        }
+        
+        .dropdown-content {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 0 0 4px 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 1000;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .dropdown-item {
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+        
+        .dropdown-item:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .dropdown-item.selected {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .faculty-selector label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: normal;
+        }
+
+        .status-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            border-radius: 4px;
+            color: white;
+            font-weight: bold;
+            z-index: 1001;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .status-success {
+            background-color: #27ae60;
+        }
+
+        .status-error {
+            background-color: #e74c3c;
+        }
+
+        .intersection-area {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+            border: 1px solid #3498db;
+        }
+
+        .intersection-label {
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>教师-院系关系可视化工具</h1>
+        
+
+        
+        <div class="controls">
+            <div class="control-group help-group">
+                <button id="help-btn">使用说明</button>
+            </div>
+            
+            <div class="control-group">
+                <input type="text" id="new-faculty" placeholder="输入院系名称" style="width: 150px;">
+                <input type="text" id="new-faculty-desc" placeholder="院系简介（可选）" style="width: 200px;">
+                <button id="add-faculty-btn">添加院系</button>
+            </div>
+            
+            <div class="control-group">
+                <select id="faculty-to-remove">
+                    <option value="">选择要删除的院系</option>
+                </select>
+                <button id="remove-faculty-btn">删除院系</button>
+            </div>
+            
+            <div class="control-group">
+                <button id="add-teacher-btn">添加教师</button>
+            </div>
+            
+            <div class="control-group">
+                <select id="batch-faculty">
+                    <option value="">选择批量添加的院系</option>
+                </select>
+                <div style="display: flex; align-items: center; gap: 5px; border: 1px solid #ddd; border-radius: 4px; padding: 2px;">
+                    <input type="text" id="file-upload-title" placeholder="职称（可选）" style="width: 120px; border: none; outline: none; padding: 6px;">
+                    <input type="file" id="teacher-file" accept=".txt" style="display: none;">
+                    <button id="browse-file-btn" style="background-color: #3498db; color: white; border: 1px solid #2980b9; border-radius: 3px; padding: 6px 10px; cursor: pointer; font-size: 12px; transition: background-color 0.3s;">选择文件</button>
+                    <span id="file-name" style="font-size: 12px; color: #666; flex: 1;">未选择文件</span>
+                </div>
+                <button id="upload-file-btn">上传文件</button>
+                <button id="manual-input-btn">手动输入</button>
+            </div>
+            
+            <div class="control-group">
+                <input type="file" id="data-file" accept=".json" style="display: none;">
+                <button id="load-data-btn">加载数据</button>
+                <button id="export-data-btn">导出数据</button>
+                <button id="notepad-btn">记事本</button>
+                <button id="ranking-btn">教师排行榜</button>
+                <button id="search-btn">教授搜索</button>
+                <button id="batch-delete-btn">批量删除</button>
+            </div>
+        </div>
+        
+        <div class="visualization" id="visualization">
+            <!-- 欧拉图/韦恩图将在这里渲染 -->
+        </div>
+    </div>
+
+    <!-- 添加/编辑教师模态框 -->
+    <div id="teacher-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="modal-title">添加教师</h2>
+            <form id="teacher-form">
+                <input type="hidden" id="teacher-id">
+                
+                <div class="form-group">
+                    <label for="teacher-name">姓名</label>
+                    <input type="text" id="teacher-name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>所属院系</label>
+                    <div class="faculty-selector" id="faculty-selector">
+                        <!-- 院系复选框将在这里动态生成 -->
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="teacher-title">职称</label>
+                    <input type="text" id="teacher-title">
+                </div>
+                
+                <div class="form-group">
+                    <label for="teacher-research">研究方向</label>
+                    <textarea id="teacher-research"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="teacher-url">教师主页网址</label>
+                    <input type="url" id="teacher-url" placeholder="https://example.com">
+                </div>
+                
+                <div class="form-group">
+                    <label for="teacher-email">教师邮箱</label>
+                    <input type="email" id="teacher-email" placeholder="example@example.com">
+                </div>
+                
+                <div class="form-group">
+                    <label for="teacher-rating">评分（0-100）</label>
+                    <input type="number" id="teacher-rating" min="0" max="100" value="0">
+                </div>
+                
+                <div class="form-group">
+                    <label for="teacher-favorite" style="display: flex; align-items: center; gap: 10px;">
+                        收藏
+                        <div id="favorite-icon" style="font-size: 24px; color: #ccc; cursor: pointer;">
+                            <i class="far fa-heart"></i>
+                        </div>
+                    </label>
+                    <input type="checkbox" id="teacher-favorite" style="display: none;">
+                </div>
+                
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit">保存</button>
+                    <button type="button" id="delete-teacher-btn" style="background-color: #e74c3c; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer;">删除</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 状态消息 -->
+    <div id="status-message" class="status-message"></div>
+
+    <!-- 手动输入教师模态框 -->
+    <div id="batch-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>批量添加教师</h2>
+            <div class="form-group">
+                <label>教师姓名（一行一个）</label>
+                <textarea id="batch-teachers" rows="10" placeholder="请输入教师姓名，一行一个"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="batch-title">职称（可选）</label>
+                <input type="text" id="batch-title" placeholder="如：教授、副教授、讲师等">
+            </div>
+            <button id="batch-add-btn">添加</button>
+        </div>
+    </div>
+
+    <!-- 使用说明模态框 -->
+    <div id="help-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>使用说明</h2>
+            <div class="form-group">
+                <h3>基本操作</h3>
+                <ul>
+                    <li><strong>添加院系</strong>：在输入框中输入院系名称和简介，点击"添加院系"按钮</li>
+                    <li><strong>删除院系</strong>：从下拉菜单中选择要删除的院系，点击"删除院系"按钮</li>
+                    <li><strong>添加教师</strong>：点击"添加教师"按钮，填写教师信息并选择所属院系</li>
+                    <li><strong>编辑教师</strong>：点击教师姓名旁边的"+"图标，修改教师信息</li>
+                    <li><strong>删除教师</strong>：在编辑教师信息时，点击"删除"按钮</li>
+                </ul>
+                
+                <h3>批量操作</h3>
+                <ul>
+                    <li><strong>上传文件批量添加</strong>：选择一个院系，上传包含教师姓名的TXT文件（一行一个），可选择设置职称</li>
+                    <li><strong>手动输入批量添加</strong>：选择一个院系，点击"手动输入"按钮，在文本框中输入教师姓名（一行一个），可选择设置职称</li>
+                    <li><strong>批量删除教师</strong>：点击"批量删除"按钮，在文本框中输入要删除的教师姓名（一行一个），点击"确认删除"按钮</li>
+                </ul>
+                
+                <h3>调整布局</h3>
+                <ul>
+                    <li><strong>拖动院系</strong>：点击院系方块的中心区域并拖动到任意位置，不受页面边界限制</li>
+                    <li><strong>调整大小</strong>：拖动院系方块四个边或四个角的调整手柄来改变大小，不受页面边界限制</li>
+                    <li><strong>教师列表滚动</strong>：当教师数量多时，教师列表会在框体内自动滚动，只显示垂直滚动条</li>
+                </ul>
+                
+                <h3>数据管理</h3>
+                <ul>
+                    <li><strong>导出数据</strong>：点击"导出数据"按钮，输入文件名后将数据保存为JSON文件（包含教师、院系和记事本数据）</li>
+                    <li><strong>加载数据</strong>：点击"加载数据"按钮，选择之前导出的JSON文件（会同时加载教师、院系和记事本数据）</li>
+                    <li>所有数据会自动保存到本地存储中，刷新页面后不会丢失</li>
+                </ul>
+                
+                <h3>教师管理</h3>
+                <ul>
+                    <li><strong>设置评分</strong>：在编辑教师信息时，设置教师的评分（0-100）</li>
+                    <li><strong>收藏教师</strong>：在编辑教师信息时点击爱心图标，或直接点击教师列表中的爱心图标</li>
+                    <li><strong>教师主页网址</strong>：在编辑教师信息时填写教师的主页网址，点击教师列表中的网址链接可直接访问</li>
+                    <li><strong>教师邮箱</strong>：在编辑教师信息时填写教师的邮箱，点击教师列表中的邮箱链接可直接发送邮件</li>
+                    <li><strong>查看排行榜</strong>：点击"教师排行榜"按钮，查看按评分排序的教师列表，支持院系、职称和收藏筛选</li>
+                    <li><strong>教授搜索</strong>：点击"教授搜索"按钮，设置院系、职称、评分阈值、收藏状态等筛选条件，输入关键词搜索教师</li>
+                </ul>
+                
+                <h3>院系管理</h3>
+                <ul>
+                    <li><strong>修改院系信息</strong>：点击院系名称或左上角的编辑图标，修改院系名称和简介</li>
+                    <li><strong>展开/收起教师列表</strong>：点击院系框右上角的箭头按钮，展开或收起教师列表</li>
+                    <li><strong>重叠区域查看</strong>：点击左上角的重叠区域列表中的蓝色按钮，查看不同院系交集区域的教师</li>
+                </ul>
+                
+                <h3>记事本功能</h3>
+                <ul>
+                    <li><strong>打开记事本</strong>：点击工具栏中的"记事本"按钮</li>
+                    <li><strong>创建记事本</strong>：在记事本列表中点击"创建新记事本"按钮</li>
+                    <li><strong>重命名记事本</strong>：在记事本列表中直接编辑记事本名称</li>
+                    <li><strong>删除记事本</strong>：在记事本列表中点击"删除"按钮（至少保留一个记事本）</li>
+                    <li><strong>保存笔记</strong>：在记事本中输入内容后，点击"保存"按钮</li>
+                    <li><strong>清空笔记</strong>：点击"清空"按钮清除所有内容</li>
+                    <li>笔记会自动保存到本地存储中，刷新页面后不会丢失</li>
+                    <li>记事本数据会在导出数据时一并保存，加载数据时一并恢复</li>
+                </ul>
+                
+                <h3>注意事项</h3>
+                <ul>
+                    <li>交集区域会根据教师所属院系自动计算和显示</li>
+                    <li>教师可以同时属于多个院系，会显示在交集区域中</li>
+                    <li>院系框只能在白板范围内拖动和调整大小</li>
+                    <li>教师姓名是唯一的，添加同名教师时会自动合并院系</li>
+                    <li>所有操作都会自动保存到本地存储，确保数据不会丢失</li>
+                    <li>导出的JSON文件包含完整的教师、院系和记事本数据，可用于备份或迁移</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- 教师排行榜模态框 -->
+    <div id="ranking-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>教师排行榜</h2>
+            <div class="form-group">
+                <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;">
+                    <div>
+                        <label>院系：</label>
+                        <div class="custom-dropdown">
+                            <div class="dropdown-header" onclick="toggleDropdown('faculty-dropdown')">
+                                <span id="faculty-selected">全部院系</span>
+                                <span class="dropdown-arrow">▼</span>
+                            </div>
+                            <div id="faculty-dropdown" class="dropdown-content" style="display: none;">
+                                <div class="dropdown-item" data-value="" onclick="toggleFacultySelection('')">全部院系</div>
+                                <!-- 院系选项将在这里动态生成 -->
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="ranking-faculty" value="">
+                    <div>
+                        <label for="ranking-title">职称：</label>
+                        <select id="ranking-title">
+                            <option value="">全部职称</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="ranking-favorite">收藏：</label>
+                        <select id="ranking-favorite">
+                            <option value="">全部</option>
+                            <option value="true">仅收藏</option>
+                        </select>
+                    </div>
+                    <div>
+                        <button id="apply-filter-btn">应用筛选</button>
+                    </div>
+                </div>
+                
+                <div id="ranking-list" style="max-height: 400px; overflow-y: auto;">
+                    <!-- 排行榜列表将在这里渲染 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 修改院系信息模态框 -->
+    <div id="edit-faculty-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>修改院系信息</h2>
+            <form id="edit-faculty-form">
+                <input type="hidden" id="edit-faculty-id">
+                
+                <div class="form-group">
+                    <label for="edit-faculty-name">院系名称</label>
+                    <input type="text" id="edit-faculty-name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="edit-faculty-desc">院系简介</label>
+                    <textarea id="edit-faculty-desc" rows="3" placeholder="请输入院系简介（可选）"></textarea>
+                </div>
+                
+                <button type="submit">保存</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 记事本模态框 -->
+    <div id="notepad-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>记事本</h2>
+            <div class="form-group">
+                <textarea id="notepad-content" rows="10" placeholder="在这里输入文本提示..."></textarea>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
+                <button id="save-notepad-btn">保存</button>
+                <button id="clear-notepad-btn">清空</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 批量删除教师模态框 -->
+    <div id="batch-delete-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>批量删除教师</h2>
+            <div class="form-group">
+                <p>请输入要删除的教师姓名（一行一个）</p>
+                <textarea id="batch-delete-teachers" rows="10" placeholder="在这里输入教师姓名，一行一个..."></textarea>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
+                <button id="batch-delete-confirm-btn" style="background-color: #e74c3c; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer;">确认删除</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 教授搜索模态框 -->
+    <div id="search-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>教授搜索</h2>
+            <div class="form-group">
+                <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;">
+                    <div>
+                        <label>院系：</label>
+                        <div class="custom-dropdown">
+                            <div class="dropdown-header" onclick="toggleDropdown('search-faculty-dropdown')">
+                                <span id="search-faculty-selected">全部院系</span>
+                                <span class="dropdown-arrow">▼</span>
+                            </div>
+                            <div id="search-faculty-dropdown" class="dropdown-content" style="display: none;">
+                                <div class="dropdown-item" data-value="" onclick="toggleSearchFacultySelection('')">全部院系</div>
+                                <!-- 院系选项将在这里动态生成 -->
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="search-faculty" value="">
+                    <div>
+                        <label for="search-title">职称：</label>
+                        <div class="custom-dropdown">
+                            <div class="dropdown-header" onclick="toggleDropdown('search-title-dropdown')">
+                                <span id="search-title-selected">全部职称</span>
+                                <span class="dropdown-arrow">▼</span>
+                            </div>
+                            <div id="search-title-dropdown" class="dropdown-content" style="display: none;">
+                                <div class="dropdown-item" data-value="" onclick="toggleSearchTitleSelection('')">全部职称</div>
+                                <!-- 职称选项将在这里动态生成 -->
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="search-title" value="">
+                    <div>
+                        <label for="search-rating">评分阈值：</label>
+                        <input type="number" id="search-rating" min="0" max="100" value="0">
+                    </div>
+                    <div>
+                        <label for="search-favorite">收藏：</label>
+                        <select id="search-favorite">
+                            <option value="">全部</option>
+                            <option value="true">仅收藏</option>
+                        </select>
+                    </div>
+                    <div style="flex: 1; min-width: 300px;">
+                        <label for="search-keyword">搜索关键词：</label>
+                        <input type="text" id="search-keyword" placeholder="输入教师姓名或研究方向">
+                    </div>
+                    <div>
+                        <button id="apply-search-btn" style="margin-top: 20px;">应用搜索</button>
+                    </div>
+                </div>
+                
+                <div id="search-results" style="max-height: 400px; overflow-y: auto;">
+                    <!-- 搜索结果将在这里渲染 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /*
+        教师-院系关系可视化工具
+        版权所有 © 2026 刘奕博
+        保留所有权利
+        联系邮箱：liuyibo_double@163.com
+        */
+        
+        // 全局变量
+        let data = {
+            faculties: [
+                { id: 1, name: '计算机学院', color: 'rgba(52, 152, 219, 0.5)', x: 100, y: 200, width: 400, height: 400 },
+                { id: 2, name: '数学学院', color: 'rgba(46, 204, 113, 0.5)', x: 500, y: 200, width: 400, height: 400 },
+                { id: 3, name: '物理学院', color: 'rgba(231, 76, 60, 0.5)', x: 300, y: 50, width: 400, height: 400 }
+            ],
+            teachers: [
+                { id: 1, name: '张三', faculties: [1], title: '教授', research: '人工智能', rating: 95, favorite: false },
+                { id: 2, name: '李四', faculties: [2], title: '副教授', research: '应用数学', rating: 88, favorite: true },
+                { id: 3, name: '王五', faculties: [3], title: '讲师', research: '凝聚态物理', rating: 75, favorite: false },
+                { id: 4, name: '赵六', faculties: [1, 2], title: '教授', research: '计算数学', rating: 92, favorite: true },
+                { id: 5, name: '钱七', faculties: [1, 3], title: '副教授', research: '量子计算', rating: 85, favorite: false },
+                { id: 6, name: '孙八', faculties: [2, 3], title: '讲师', research: '数学物理', rating: 78, favorite: false },
+                { id: 7, name: '周九', faculties: [1, 2, 3], title: '教授', research: '交叉学科', rating: 90, favorite: true }
+            ]
+        };
+
+        let draggedElement = null;
+        let offsetX, offsetY;
+
+        // 初始化
+        window.onload = function() {
+            loadData();
+            loadNotepads();
+            // 设置默认记事本
+            if (notepads.length > 0) {
+                currentNotepadId = notepads[0].id;
+            }
+            updateFacultySelector();
+            updateFacultyRemoveDropdown();
+            updateBatchFacultyDropdown();
+            updateRankingDropdowns();
+            renderVisualization();
+            setupEventListeners();
+        };
+
+        // 加载数据
+        function loadData() {
+            try {
+                const storedData = localStorage.getItem('teacherFacultyData');
+                if (storedData) {
+                    data = JSON.parse(storedData);
+                } else {
+                    // 如果没有存储的数据，创建空数据
+                    data = {
+                        faculties: [],
+                        teachers: []
+                    };
+                    saveData();
+                }
+                
+                // 加载记事本数据
+                loadNotepads();
+            } catch (error) {
+                console.error('加载数据失败:', error);
+                // 创建空数据
+                data = {
+                    faculties: [],
+                    teachers: []
+                };
+                saveData();
+            }
+        }
+
+        // 保存数据
+        function saveData() {
+            try {
+                localStorage.setItem('teacherFacultyData', JSON.stringify(data));
+                showStatus('数据已保存', 'success');
+            } catch (error) {
+                console.error('保存数据失败:', error);
+                showStatus('保存数据失败', 'error');
+            }
+        }
+        
+        // 根据职称返回颜色
+        function getTitleColor(title) {
+            const titleColors = {
+                '教授': '#3498db',
+                '副教授': '#2ecc71',
+                '讲师': '#f39c12',
+                '助教': '#9b59b6',
+                '研究员': '#e74c3c',
+                '助理研究员': '#1abc9c'
+            };
+            return titleColors[title] || '#95a5a6'; // 默认颜色
+        }
+        
+        // 记事本数据结构
+        let notepads = [];
+        let currentNotepadId = null;
+        
+        // 加载记事本数据
+        function loadNotepads() {
+            try {
+                const storedNotepads = localStorage.getItem('notepads');
+                if (storedNotepads) {
+                    notepads = JSON.parse(storedNotepads);
+                } else {
+                    // 创建默认记事本
+                    notepads = [
+                        { id: 1, name: '默认记事本', content: '' }
+                    ];
+                    saveNotepads();
+                }
+                // 设置当前记事本ID为第一个记事本的ID
+                if (notepads.length > 0) {
+                    currentNotepadId = notepads[0].id;
+                }
+            } catch (error) {
+                console.error('加载记事本失败:', error);
+                notepads = [
+                    { id: 1, name: '默认记事本', content: '' }
+                ];
+                saveNotepads();
+                // 设置当前记事本ID为默认记事本的ID
+                currentNotepadId = 1;
+            }
+        }
+        
+        // 保存记事本数据
+        function saveNotepads() {
+            try {
+                localStorage.setItem('notepads', JSON.stringify(notepads));
+            } catch (error) {
+                console.error('保存记事本失败:', error);
+            }
+        }
+        
+        // 保存当前记事本内容
+        function saveNotepad() {
+            try {
+                if (currentNotepadId) {
+                    const notepad = notepads.find(n => n.id === currentNotepadId);
+                    if (notepad) {
+                        notepad.content = document.getElementById('notepad-content').value;
+                        saveNotepads();
+                        showStatus('记事本已保存', 'success');
+                    }
+                }
+            } catch (error) {
+                console.error('保存记事本失败:', error);
+                showStatus('保存记事本失败', 'error');
+            }
+        }
+        
+        // 清空当前记事本内容
+        function clearNotepad() {
+            try {
+                if (currentNotepadId) {
+                    const notepad = notepads.find(n => n.id === currentNotepadId);
+                    if (notepad) {
+                        notepad.content = '';
+                        document.getElementById('notepad-content').value = '';
+                        saveNotepads();
+                        showStatus('记事本已清空', 'success');
+                    }
+                }
+            } catch (error) {
+                console.error('清空记事本失败:', error);
+                showStatus('清空记事本失败', 'error');
+            }
+        }
+        
+        // 创建新记事本
+        function createNotepad() {
+            const newId = Math.max(...notepads.map(n => n.id), 0) + 1;
+            const newNotepad = {
+                id: newId,
+                name: `记事本 ${newId}`,
+                content: ''
+            };
+            notepads.push(newNotepad);
+            saveNotepads();
+            return newNotepad;
+        }
+        
+        // 删除记事本
+        function deleteNotepad(id) {
+            if (notepads.length > 1) {
+                notepads = notepads.filter(n => n.id !== id);
+                saveNotepads();
+                // 如果删除的是当前记事本，切换到第一个记事本
+                if (currentNotepadId === id) {
+                    currentNotepadId = notepads[0].id;
+                    loadCurrentNotepad();
+                }
+                showStatus('记事本已删除', 'success');
+            } else {
+                showStatus('至少需要保留一个记事本', 'error');
+            }
+        }
+        
+        // 重命名记事本
+        function renameNotepad(id, newName) {
+            const notepad = notepads.find(n => n.id === id);
+            if (notepad) {
+                notepad.name = newName;
+                saveNotepads();
+                showStatus('记事本已重命名', 'success');
+            }
+        }
+        
+        // 加载当前记事本
+        function loadCurrentNotepad() {
+            if (currentNotepadId) {
+                const notepad = notepads.find(n => n.id === currentNotepadId);
+                if (notepad) {
+                    document.getElementById('notepad-content').value = notepad.content;
+                    document.querySelector('#notepad-modal h2').textContent = notepad.name;
+                }
+            }
+        }
+        
+        // 打开记事本列表
+        function openNotepadList() {
+            const modal = document.getElementById('notepad-modal');
+            const content = modal.querySelector('.modal-content');
+            
+            // 保存当前内容
+            if (currentNotepadId) {
+                const notepad = notepads.find(n => n.id === currentNotepadId);
+                if (notepad) {
+                    const notepadContent = document.getElementById('notepad-content');
+                    if (notepadContent) {
+                        notepad.content = notepadContent.value;
+                        saveNotepads();
+                    }
+                }
+            }
+            
+            // 渲染记事本列表
+            content.innerHTML = `
+                <span class="close">&times;</span>
+                <h2>记事本列表</h2>
+                <div style="margin-bottom: 20px;">
+                    <button id="create-notepad-btn" style="margin-bottom: 10px;">创建新记事本</button>
+                    <div id="notepad-list" style="max-height: 300px; overflow-y: auto;">
+                        ${notepads.map(notepad => `
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px; border-bottom: 1px solid #ddd;">
+                                <div style="flex: 1;">
+                                    <input type="text" value="${notepad.name}" data-id="${notepad.id}" class="notepad-name-input" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 4px;">
+                                </div>
+                                <div style="display: flex; gap: 5px;">
+                                    <button class="open-notepad-btn" data-id="${notepad.id}" style="padding: 5px 10px; background-color: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer;">打开</button>
+                                    <button class="delete-notepad-btn" data-id="${notepad.id}" style="padding: 5px 10px; background-color: #e74c3c; color: white; border: none; border-radius: 4px; cursor: pointer;">删除</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            
+            modal.style.display = 'block';
+            
+            // 添加事件监听器
+            content.querySelector('#create-notepad-btn').onclick = function() {
+                const newNotepad = createNotepad();
+                openNotepadList(); // 重新渲染列表
+            };
+            
+            // 打开记事本按钮
+            content.querySelectorAll('.open-notepad-btn').forEach(btn => {
+                btn.onclick = function() {
+                    const id = parseInt(this.dataset.id);
+                    currentNotepadId = id;
+                    openNotepadModal();
+                };
+            });
+            
+            // 删除记事本按钮
+            content.querySelectorAll('.delete-notepad-btn').forEach(btn => {
+                btn.onclick = function() {
+                    const id = parseInt(this.dataset.id);
+                    if (confirm('确定要删除这个记事本吗？')) {
+                        deleteNotepad(id);
+                        openNotepadList(); // 重新渲染列表
+                    }
+                };
+            });
+            
+            // 重命名记事本
+            content.querySelectorAll('.notepad-name-input').forEach(input => {
+                input.onblur = function() {
+                    const id = parseInt(this.dataset.id);
+                    const newName = this.value.trim();
+                    if (newName) {
+                        renameNotepad(id, newName);
+                    }
+                };
+            });
+            
+            // 关闭按钮
+            content.querySelector('.close').onclick = function() {
+                modal.style.display = 'none';
+            };
+            
+            // 点击模态框外部关闭
+            window.onclick = function(event) {
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            };
+        }
+        
+        // 打开记事本编辑模态框
+        function openNotepadModal() {
+            const modal = document.getElementById('notepad-modal');
+            const content = modal.querySelector('.modal-content');
+            
+            // 渲染编辑界面
+            content.innerHTML = `
+                <span class="close">&times;</span>
+                <h2>${currentNotepadId ? notepads.find(n => n.id === currentNotepadId)?.name || '记事本' : '记事本'}</h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <button id="notepad-list-btn" style="padding: 5px 10px; background-color: #95a5a6; color: white; border: none; border-radius: 4px; cursor: pointer;">记事本列表</button>
+                </div>
+                <div class="form-group">
+                    <textarea id="notepad-content" rows="10" placeholder="在这里输入文本提示..."></textarea>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
+                    <button id="save-notepad-btn">保存</button>
+                    <button id="clear-notepad-btn">清空</button>
+                </div>
+            `;
+            
+            modal.style.display = 'block';
+            
+            // 加载当前记事本内容
+            loadCurrentNotepad();
+            
+            // 添加事件监听器
+            content.querySelector('#notepad-list-btn').onclick = openNotepadList;
+            content.querySelector('#save-notepad-btn').onclick = saveNotepad;
+            content.querySelector('#clear-notepad-btn').onclick = clearNotepad;
+            
+            // 关闭按钮
+            content.querySelector('.close').onclick = function() {
+                modal.style.display = 'none';
+            };
+            
+            // 点击模态框外部关闭
+            window.onclick = function(event) {
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            };
+        }
+
+        // 导出数据到JSON文件
+        function exportData() {
+            try {
+                // 提示用户输入文件名
+                const defaultFileName = 'teacher_faculty_data.json';
+                const fileName = prompt('请输入导出文件名（默认：teacher_faculty_data.json）', defaultFileName);
+                
+                // 如果用户取消，不执行导出
+                if (fileName === null) {
+                    return;
+                }
+                
+                // 确保文件名以 .json 结尾
+                const finalFileName = fileName.trim() ? 
+                    (fileName.endsWith('.json') ? fileName.trim() : fileName.trim() + '.json') : 
+                    defaultFileName;
+                
+                // 包含记事本数据
+                const exportData = {
+                    faculties: data.faculties,
+                    teachers: data.teachers,
+                    notepads: notepads
+                };
+                
+                const dataStr = JSON.stringify(exportData, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = finalFileName;
+                link.click();
+                URL.revokeObjectURL(url);
+                showStatus('数据导出成功', 'success');
+            } catch (error) {
+                console.error('导出数据失败:', error);
+                showStatus('导出数据失败', 'error');
+            }
+        }
+
+        // 加载JSON文件数据
+        function loadDataFromFile(file) {
+            try {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const loadedData = JSON.parse(e.target.result);
+                        // 验证数据格式
+                        if (loadedData.faculties && loadedData.teachers) {
+                            data = {
+                                faculties: loadedData.faculties,
+                                teachers: loadedData.teachers
+                            };
+                            saveData();
+                            updateFacultySelector();
+                            updateFacultyRemoveDropdown();
+                            updateBatchFacultyDropdown();
+                            renderVisualization();
+                            
+                            // 加载记事本数据
+                            if (loadedData.notepads && Array.isArray(loadedData.notepads)) {
+                                notepads = loadedData.notepads;
+                                saveNotepads();
+                                // 设置当前记事本ID
+                                if (notepads.length > 0) {
+                                    currentNotepadId = notepads[0].id;
+                                }
+                            }
+                            
+                            showStatus('数据加载成功', 'success');
+                        } else {
+                            showStatus('数据格式错误', 'error');
+                        }
+                    } catch (parseError) {
+                        console.error('解析数据失败:', parseError);
+                        showStatus('解析数据失败', 'error');
+                    }
+                };
+                reader.onerror = function() {
+                    showStatus('文件读取失败', 'error');
+                };
+                reader.readAsText(file);
+            } catch (error) {
+                console.error('加载文件失败:', error);
+                showStatus('加载文件失败', 'error');
+            }
+        }
+
+        // 显示状态消息
+        function showStatus(message, type) {
+            const statusElement = document.getElementById('status-message');
+            statusElement.textContent = message;
+            statusElement.className = `status-message status-${type}`;
+            statusElement.style.opacity = '1';
+            
+            setTimeout(() => {
+                statusElement.style.opacity = '0';
+            }, 3000);
+        }
+
+        // 更新院系选择器
+        function updateFacultySelector() {
+            const selector = document.getElementById('faculty-selector');
+            selector.innerHTML = '';
+            
+            data.faculties.forEach(faculty => {
+                const label = document.createElement('label');
+                label.innerHTML = `
+                    <input type="checkbox" value="${faculty.id}">
+                    ${faculty.name}
+                `;
+                selector.appendChild(label);
+            });
+        }
+
+        // 更新院系删除下拉框
+        function updateFacultyRemoveDropdown() {
+            const dropdown = document.getElementById('faculty-to-remove');
+            dropdown.innerHTML = '<option value="">选择要删除的院系</option>';
+            
+            data.faculties.forEach(faculty => {
+                const option = document.createElement('option');
+                option.value = faculty.id;
+                option.textContent = faculty.name;
+                dropdown.appendChild(option);
+            });
+        }
+
+        // 更新批量添加院系下拉框
+        function updateBatchFacultyDropdown() {
+            const dropdown = document.getElementById('batch-faculty');
+            dropdown.innerHTML = '<option value="">选择批量添加的院系</option>';
+            
+            data.faculties.forEach(faculty => {
+                const option = document.createElement('option');
+                option.value = faculty.id;
+                option.textContent = faculty.name;
+                dropdown.appendChild(option);
+            });
+        }
+
+        // 更新排行榜筛选下拉框
+        function updateRankingDropdowns() {
+            // 更新院系自定义下拉列表
+            const facultyDropdownContent = document.getElementById('faculty-dropdown');
+            // 保留第一个"全部院系"选项
+            const allOption = facultyDropdownContent.querySelector('.dropdown-item[data-value=""]');
+            facultyDropdownContent.innerHTML = '';
+            facultyDropdownContent.appendChild(allOption);
+            
+            data.faculties.forEach(faculty => {
+                const item = document.createElement('div');
+                item.className = 'dropdown-item';
+                item.setAttribute('data-value', faculty.id);
+                item.onclick = function() { toggleFacultySelection(faculty.id); };
+                item.textContent = faculty.name;
+                facultyDropdownContent.appendChild(item);
+            });
+            
+            // 更新职称下拉框
+            const titleDropdown = document.getElementById('ranking-title');
+            titleDropdown.innerHTML = '<option value="">全部职称</option>';
+            
+            // 收集所有唯一的职称
+            const titles = [...new Set(data.teachers.map(t => t.title).filter(t => t))];
+            titles.forEach(title => {
+                const option = document.createElement('option');
+                option.value = title;
+                option.textContent = title;
+                titleDropdown.appendChild(option);
+            });
+        }
+        
+        // 更新搜索下拉列表
+        function updateSearchDropdowns() {
+            // 更新院系自定义下拉列表
+            const facultyDropdownContent = document.getElementById('search-faculty-dropdown');
+            // 保留第一个"全部院系"选项
+            const allOption = facultyDropdownContent.querySelector('.dropdown-item[data-value=""]');
+            facultyDropdownContent.innerHTML = '';
+            facultyDropdownContent.appendChild(allOption);
+            
+            data.faculties.forEach(faculty => {
+                const item = document.createElement('div');
+                item.className = 'dropdown-item';
+                item.setAttribute('data-value', faculty.id);
+                item.onclick = function() { toggleSearchFacultySelection(faculty.id); };
+                item.textContent = faculty.name;
+                facultyDropdownContent.appendChild(item);
+            });
+            
+            // 更新职称自定义下拉列表
+            const titleDropdownContent = document.getElementById('search-title-dropdown');
+            // 保留第一个"全部职称"选项
+            const allTitleOption = titleDropdownContent.querySelector('.dropdown-item[data-value=""]');
+            titleDropdownContent.innerHTML = '';
+            titleDropdownContent.appendChild(allTitleOption);
+            
+            // 收集所有唯一的职称
+            const titles = [...new Set(data.teachers.map(t => t.title).filter(t => t))];
+            titles.forEach(title => {
+                const item = document.createElement('div');
+                item.className = 'dropdown-item';
+                item.setAttribute('data-value', title);
+                item.onclick = function() { toggleSearchTitleSelection(title); };
+                item.textContent = title;
+                titleDropdownContent.appendChild(item);
+            });
+        }
+        
+        // 切换搜索院系选择状态
+        function toggleSearchFacultySelection(facultyId) {
+            // 获取当前选中的院系
+            let selectedFaculties = JSON.parse(document.getElementById('search-faculty').value || '[]');
+            
+            if (facultyId === '') {
+                // 点击"全部院系"，清空选择
+                selectedFaculties = [];
+            } else {
+                // 切换选中状态
+                const index = selectedFaculties.indexOf(parseInt(facultyId));
+                if (index > -1) {
+                    // 已选中，移除
+                    selectedFaculties.splice(index, 1);
+                } else {
+                    // 未选中，添加
+                    selectedFaculties.push(parseInt(facultyId));
+                }
+            }
+            
+            // 保存选中状态
+            document.getElementById('search-faculty').value = JSON.stringify(selectedFaculties);
+            
+            // 更新下拉列表显示
+            updateSearchFacultyDisplay();
+            
+            // 关闭下拉列表
+            document.getElementById('search-faculty-dropdown').style.display = 'none';
+        }
+        
+        // 更新搜索院系下拉列表显示
+        function updateSearchFacultyDisplay() {
+            const selectedFaculties = JSON.parse(document.getElementById('search-faculty').value || '[]');
+            const facultySelected = document.getElementById('search-faculty-selected');
+            
+            if (selectedFaculties.length === 0) {
+                facultySelected.textContent = '全部院系';
+            } else if (selectedFaculties.length === 1) {
+                // 显示选中的院系名称
+                const faculty = data.faculties.find(f => f.id === selectedFaculties[0]);
+                facultySelected.textContent = faculty ? faculty.name : '院系';
+            } else {
+                // 显示选中数量
+                facultySelected.textContent = `已选择 ${selectedFaculties.length} 个院系`;
+            }
+            
+            // 更新下拉列表中选项的选中状态
+            const dropdownItems = document.querySelectorAll('#search-faculty-dropdown .dropdown-item');
+            dropdownItems.forEach(item => {
+                const value = item.getAttribute('data-value');
+                if (value === '') {
+                    // "全部院系"选项
+                    item.classList.toggle('selected', selectedFaculties.length === 0);
+                } else {
+                    // 其他院系选项
+                    item.classList.toggle('selected', selectedFaculties.includes(parseInt(value)));
+                }
+            });
+        }
+        
+        // 切换搜索职称选择状态
+        function toggleSearchTitleSelection(title) {
+            // 获取当前选中的职称
+            let selectedTitles = JSON.parse(document.getElementById('search-title').value || '[]');
+            
+            if (title === '') {
+                // 点击"全部职称"，清空选择
+                selectedTitles = [];
+            } else {
+                // 切换选中状态
+                const index = selectedTitles.indexOf(title);
+                if (index > -1) {
+                    // 已选中，移除
+                    selectedTitles.splice(index, 1);
+                } else {
+                    // 未选中，添加
+                    selectedTitles.push(title);
+                }
+            }
+            
+            // 保存选中状态
+            document.getElementById('search-title').value = JSON.stringify(selectedTitles);
+            
+            // 更新下拉列表显示
+            updateSearchTitleDisplay();
+            
+            // 关闭下拉列表
+            document.getElementById('search-title-dropdown').style.display = 'none';
+        }
+        
+        // 更新搜索职称下拉列表显示
+        function updateSearchTitleDisplay() {
+            const selectedTitles = JSON.parse(document.getElementById('search-title').value || '[]');
+            const titleSelected = document.getElementById('search-title-selected');
+            
+            if (selectedTitles.length === 0) {
+                titleSelected.textContent = '全部职称';
+            } else if (selectedTitles.length === 1) {
+                // 显示选中的职称名称
+                titleSelected.textContent = selectedTitles[0];
+            } else {
+                // 显示选中数量
+                titleSelected.textContent = `已选择 ${selectedTitles.length} 个职称`;
+            }
+            
+            // 更新下拉列表中选项的选中状态
+            const dropdownItems = document.querySelectorAll('#search-title-dropdown .dropdown-item');
+            dropdownItems.forEach(item => {
+                const value = item.getAttribute('data-value');
+                if (value === '') {
+                    // "全部职称"选项
+                    item.classList.toggle('selected', selectedTitles.length === 0);
+                } else {
+                    // 其他职称选项
+                    item.classList.toggle('selected', selectedTitles.includes(value));
+                }
+            });
+        }
+
+        // 渲染教师排行榜
+        function renderRanking() {
+            // 获取选中的院系（支持多选）
+            const selectedFaculties = JSON.parse(document.getElementById('ranking-faculty').value || '[]');
+            
+            const titleFilter = document.getElementById('ranking-title').value;
+            const favoriteFilter = document.getElementById('ranking-favorite').value;
+            
+            // 筛选教师
+            let filteredTeachers = [...data.teachers];
+            
+            if (selectedFaculties.length > 0) {
+                // 筛选至少属于一个选中院系的教师
+                filteredTeachers = filteredTeachers.filter(t => {
+                    return selectedFaculties.some(facultyId => t.faculties.includes(facultyId));
+                });
+            }
+            
+            if (titleFilter) {
+                filteredTeachers = filteredTeachers.filter(t => t.title === titleFilter);
+            }
+            
+            if (favoriteFilter === 'true') {
+                filteredTeachers = filteredTeachers.filter(t => t.favorite);
+            }
+            
+            // 按评分排序
+            filteredTeachers.sort((a, b) => b.rating - a.rating);
+            
+            // 渲染排行榜
+            const rankingList = document.getElementById('ranking-list');
+            rankingList.innerHTML = '';
+            
+            if (filteredTeachers.length === 0) {
+                rankingList.innerHTML = '<p>没有符合条件的教师</p>';
+                return;
+            }
+            
+            filteredTeachers.forEach((teacher, index) => {
+                const item = document.createElement('div');
+                item.style.display = 'flex';
+                item.style.alignItems = 'center';
+                item.style.justifyContent = 'space-between';
+                item.style.padding = '10px';
+                item.style.borderBottom = '1px solid #ddd';
+                
+                const leftContent = document.createElement('div');
+                leftContent.style.display = 'flex';
+                leftContent.style.alignItems = 'center';
+                leftContent.style.gap = '15px';
+                
+                const rank = document.createElement('div');
+                rank.style.fontWeight = 'bold';
+                rank.style.width = '30px';
+                rank.textContent = index + 1;
+                leftContent.appendChild(rank);
+                
+                const name = document.createElement('div');
+                name.style.fontWeight = 'bold';
+                name.textContent = teacher.name;
+                leftContent.appendChild(name);
+                
+                const faculties = document.createElement('div');
+                faculties.style.fontSize = '12px';
+                faculties.style.color = '#666';
+                const facultyNames = teacher.faculties.map(id => {
+                    const faculty = data.faculties.find(f => f.id === id);
+                    return faculty ? faculty.name : '';
+                }).join(', ');
+                faculties.textContent = facultyNames;
+                leftContent.appendChild(faculties);
+                
+                const rightContent = document.createElement('div');
+                rightContent.style.display = 'flex';
+                rightContent.style.alignItems = 'center';
+                rightContent.style.gap = '15px';
+                
+                const rating = document.createElement('div');
+                rating.style.fontWeight = 'bold';
+                rating.textContent = `评分: ${teacher.rating}`;
+                rightContent.appendChild(rating);
+                
+                const favorite = document.createElement('div');
+                favorite.style.color = teacher.favorite ? '#e74c3c' : '#ccc';
+                favorite.innerHTML = teacher.favorite ? '<i class="fas fa-heart"></i>' : '<i class="far fa-heart"></i>';
+                favorite.style.cursor = 'pointer';
+                favorite.onclick = function(e) {
+                    e.stopPropagation();
+                    teacher.favorite = !teacher.favorite;
+                    favorite.style.color = teacher.favorite ? '#e74c3c' : '#ccc';
+                    favorite.innerHTML = teacher.favorite ? '<i class="fas fa-heart"></i>' : '<i class="far fa-heart"></i>';
+                    saveData();
+                };
+                rightContent.appendChild(favorite);
+                
+                const infoBtn = document.createElement('button');
+                infoBtn.className = 'teacher-info-btn';
+                infoBtn.innerHTML = '<i class="fas fa-plus"></i>';
+                infoBtn.onclick = function() {
+                    openTeacherModal(teacher);
+                    document.getElementById('ranking-modal').style.display = 'none';
+                };
+                rightContent.appendChild(infoBtn);
+                
+                item.appendChild(leftContent);
+                item.appendChild(rightContent);
+                rankingList.appendChild(item);
+            });
+        }
+        
+        // 渲染搜索结果
+        function renderSearch() {
+            // 获取选中的院系（支持多选）
+            const selectedFaculties = JSON.parse(document.getElementById('search-faculty').value || '[]');
+            
+            // 获取选中的职称（支持多选）
+            const selectedTitles = JSON.parse(document.getElementById('search-title').value || '[]');
+            
+            const ratingThreshold = parseInt(document.getElementById('search-rating').value) || 0;
+            const favoriteFilter = document.getElementById('search-favorite').value;
+            const keyword = document.getElementById('search-keyword').value.toLowerCase().trim();
+            
+            // 筛选教师
+            let filteredTeachers = [...data.teachers];
+            
+            if (selectedFaculties.length > 0) {
+                // 筛选至少属于一个选中院系的教师
+                filteredTeachers = filteredTeachers.filter(t => {
+                    return selectedFaculties.some(facultyId => t.faculties.includes(facultyId));
+                });
+            }
+            
+            if (selectedTitles.length > 0) {
+                // 筛选至少属于一个选中职称的教师
+                filteredTeachers = filteredTeachers.filter(t => {
+                    return selectedTitles.includes(t.title);
+                });
+            }
+            
+            // 筛选评分大于等于阈值的教师
+            filteredTeachers = filteredTeachers.filter(t => (t.rating || 0) >= ratingThreshold);
+            
+            if (favoriteFilter === 'true') {
+                filteredTeachers = filteredTeachers.filter(t => t.favorite);
+            }
+            
+            // 关键词搜索
+            if (keyword) {
+                filteredTeachers = filteredTeachers.filter(t => {
+                    return t.name.toLowerCase().includes(keyword) || 
+                           (t.research && t.research.toLowerCase().includes(keyword));
+                });
+            }
+            
+            // 按评分排序
+            filteredTeachers.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+            
+            const searchResults = document.getElementById('search-results');
+            searchResults.innerHTML = '';
+            
+            if (filteredTeachers.length === 0) {
+                searchResults.innerHTML = '<p>没有符合条件的教师</p>';
+                return;
+            }
+            
+            filteredTeachers.forEach(teacher => {
+                const item = document.createElement('div');
+                item.className = 'search-item';
+                item.style.display = 'flex';
+                item.style.justifyContent = 'space-between';
+                item.style.alignItems = 'center';
+                item.style.padding = '10px';
+                item.style.borderBottom = '1px solid #eee';
+                
+                const leftContent = document.createElement('div');
+                leftContent.style.display = 'flex';
+                leftContent.style.alignItems = 'center';
+                leftContent.style.gap = '10px';
+                
+                const name = document.createElement('div');
+                name.style.fontWeight = 'bold';
+                name.textContent = teacher.name;
+                leftContent.appendChild(name);
+                
+                // 显示收藏状态
+                const favorite = document.createElement('div');
+                favorite.style.color = teacher.favorite ? '#e74c3c' : '#ccc';
+                favorite.innerHTML = teacher.favorite ? '<i class="fas fa-heart"></i>' : '<i class="far fa-heart"></i>';
+                favorite.style.cursor = 'pointer';
+                favorite.onclick = function(e) {
+                    e.stopPropagation();
+                    teacher.favorite = !teacher.favorite;
+                    favorite.style.color = teacher.favorite ? '#e74c3c' : '#ccc';
+                    favorite.innerHTML = teacher.favorite ? '<i class="fas fa-heart"></i>' : '<i class="far fa-heart"></i>';
+                    saveData();
+                };
+                leftContent.appendChild(favorite);
+                
+                // 显示职称
+                if (teacher.title) {
+                    const title = document.createElement('div');
+                    title.style.fontSize = '12px';
+                    title.style.color = '#666';
+                    title.textContent = teacher.title;
+                    leftContent.appendChild(title);
+                }
+                
+                // 显示所属院系
+                const faculties = document.createElement('div');
+                faculties.style.fontSize = '12px';
+                faculties.style.color = '#666';
+                const facultyNames = teacher.faculties.map(fid => {
+                    const faculty = data.faculties.find(f => f.id === fid);
+                    return faculty ? faculty.name : '';
+                }).filter(n => n).join(', ');
+                faculties.textContent = `所属院系: ${facultyNames}`;
+                leftContent.appendChild(faculties);
+                
+                // 显示研究方向
+                if (teacher.research) {
+                    const research = document.createElement('div');
+                    research.style.fontSize = '12px';
+                    research.style.color = '#666';
+                    research.textContent = `研究方向: ${teacher.research}`;
+                    leftContent.appendChild(research);
+                }
+                
+                // 显示教师主页网址
+                if (teacher.url) {
+                    const url = document.createElement('div');
+                    url.style.fontSize = '12px';
+                    url.style.color = '#3498db';
+                    url.style.textDecoration = 'underline';
+                    url.style.cursor = 'pointer';
+                    url.textContent = `主页: ${teacher.url}`;
+                    url.onclick = function(e) {
+                        e.stopPropagation();
+                        window.open(teacher.url, '_blank');
+                    };
+                    leftContent.appendChild(url);
+                }
+                
+                // 显示教师邮箱
+                if (teacher.email) {
+                    const email = document.createElement('div');
+                    email.style.fontSize = '12px';
+                    email.style.color = '#3498db';
+                    email.style.textDecoration = 'underline';
+                    email.style.cursor = 'pointer';
+                    email.textContent = `邮箱: ${teacher.email}`;
+                    email.onclick = function(e) {
+                        e.stopPropagation();
+                        window.location.href = `mailto:${teacher.email}`;
+                    };
+                    leftContent.appendChild(email);
+                }
+                
+                const rightContent = document.createElement('div');
+                rightContent.style.display = 'flex';
+                rightContent.style.alignItems = 'center';
+                rightContent.style.gap = '10px';
+                
+                // 显示评分
+                const rating = document.createElement('div');
+                rating.style.fontWeight = 'bold';
+                rating.textContent = `评分: ${teacher.rating || 0}`;
+                rightContent.appendChild(rating);
+                
+                // 编辑按钮
+                const editBtn = document.createElement('button');
+                editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+                editBtn.style.cursor = 'pointer';
+                editBtn.style.padding = '5px';
+                editBtn.style.border = '1px solid #3498db';
+                editBtn.style.borderRadius = '3px';
+                editBtn.style.backgroundColor = 'white';
+                editBtn.onclick = function(e) {
+                    e.stopPropagation();
+                    openTeacherModal(teacher);
+                    document.getElementById('search-modal').style.display = 'none';
+                };
+                rightContent.appendChild(editBtn);
+                
+                item.appendChild(leftContent);
+                item.appendChild(rightContent);
+                searchResults.appendChild(item);
+            });
+        }
+
+        // 渲染可视化
+        function renderVisualization() {
+            const container = document.getElementById('visualization');
+            container.innerHTML = '';
+            
+            // 创建重叠区域按钮列表容器
+            const overlapButtonsContainer = document.createElement('div');
+            overlapButtonsContainer.className = 'overlap-buttons-container';
+            overlapButtonsContainer.style.position = 'absolute';
+            overlapButtonsContainer.style.top = '10px';
+            overlapButtonsContainer.style.left = '10px';
+            overlapButtonsContainer.style.zIndex = '100';
+            overlapButtonsContainer.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+            overlapButtonsContainer.style.padding = '10px';
+            overlapButtonsContainer.style.borderRadius = '5px';
+            overlapButtonsContainer.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+            overlapButtonsContainer.style.maxWidth = '300px';
+            
+            const title = document.createElement('div');
+            title.style.fontWeight = 'bold';
+            title.style.marginBottom = '10px';
+            title.style.fontSize = '14px';
+            title.textContent = '重叠区域列表';
+            overlapButtonsContainer.appendChild(title);
+            
+            container.appendChild(overlapButtonsContainer);
+            
+            // 渲染院系方块
+            data.faculties.forEach(faculty => {
+                const box = document.createElement('div');
+                box.className = 'faculty-box';
+                box.style.left = `${faculty.x}px`;
+                box.style.top = `${faculty.y}px`;
+                box.style.width = `${faculty.width}px`;
+                box.style.height = `${faculty.height}px`;
+                box.style.backgroundColor = faculty.color;
+                box.dataset.id = faculty.id;
+                
+                const name = document.createElement('div');
+                name.className = 'faculty-name';
+                name.textContent = faculty.name;
+                name.style.cursor = 'pointer';
+                name.title = faculty.description || '点击修改院系信息';
+                name.onclick = function(e) {
+                    e.stopPropagation();
+                    openEditFacultyModal(faculty);
+                };
+                box.appendChild(name);
+                
+                // 创建修改按钮
+                const editBtn = document.createElement('button');
+                editBtn.className = 'edit-faculty-btn';
+                editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+                editBtn.style.position = 'absolute';
+                editBtn.style.top = '5px';
+                editBtn.style.left = '5px';
+                editBtn.style.width = '18px';
+                editBtn.style.height = '18px';
+                editBtn.style.padding = '0';
+                editBtn.style.fontSize = '10px';
+                editBtn.style.zIndex = '25';
+                editBtn.style.cursor = 'pointer';
+                editBtn.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
+                editBtn.style.border = '1px solid #3498db';
+                editBtn.style.borderRadius = '3px';
+                editBtn.title = '修改院系信息';
+                editBtn.onclick = function(e) {
+                    e.stopPropagation();
+                    openEditFacultyModal(faculty);
+                };
+                box.appendChild(editBtn);
+                
+                // 渲染该院系的所有教师（包括同时属于其他院系的教师）
+                const facultyTeachers = data.teachers.filter(teacher => 
+                    teacher.faculties.includes(faculty.id)
+                );
+                
+                if (facultyTeachers.length > 0) {
+                    // 创建展开/收起按钮
+                    const toggleBtn = document.createElement('button');
+                    toggleBtn.className = 'toggle-btn';
+                    toggleBtn.innerHTML = '<i class="fas fa-chevron-down"></i>';
+                    toggleBtn.style.position = 'absolute';
+                    toggleBtn.style.top = '10px';
+                    toggleBtn.style.right = '10px';
+                    toggleBtn.style.width = '20px';
+                    toggleBtn.style.height = '20px';
+                    toggleBtn.style.padding = '0';
+                    toggleBtn.style.fontSize = '12px';
+                    toggleBtn.style.zIndex = '25';
+                    toggleBtn.style.cursor = 'pointer';
+                    box.appendChild(toggleBtn);
+                    
+                    const teacherList = document.createElement('div');
+                    teacherList.className = 'teacher-list';
+                    teacherList.style.display = 'block'; // 默认显示
+                    
+                    facultyTeachers.forEach(teacher => {
+                        const teacherItem = createTeacherItem(teacher);
+                        teacherList.appendChild(teacherItem);
+                    });
+                    
+                    box.appendChild(teacherList);
+                    
+                    // 检查是否有保存的展开/收起状态
+                    let isExpanded = !faculty.collapsed;
+                    
+                    // 设置初始显示状态
+                    if (!isExpanded) {
+                        teacherList.style.display = 'none';
+                        toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+                    } else {
+                        teacherList.style.display = 'block';
+                        toggleBtn.innerHTML = '<i class="fas fa-chevron-down"></i>';
+                    }
+                    
+                    // 添加展开/收起功能
+                    toggleBtn.onclick = function(e) {
+                        e.stopPropagation();
+                        if (teacherList.style.display === 'block') {
+                            teacherList.style.display = 'none';
+                            toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+                            faculty.collapsed = true;
+                        } else {
+                            teacherList.style.display = 'block';
+                            toggleBtn.innerHTML = '<i class="fas fa-chevron-down"></i>';
+                            faculty.collapsed = false;
+                        }
+                        saveData();
+                    };
+                }
+                
+                // 添加调整大小的手柄
+                const handles = ['top-left', 'top-right', 'bottom-left', 'bottom-right', 'top', 'bottom', 'left', 'right'];
+                handles.forEach(position => {
+                    const handle = document.createElement('div');
+                    const isCorner = ['top-left', 'top-right', 'bottom-left', 'bottom-right'].includes(position);
+                    handle.className = `resize-handle ${isCorner ? 'corner' : 'edge'} ${position}`;
+                    handle.dataset.position = position;
+                    handle.dataset.facultyId = faculty.id;
+                    box.appendChild(handle);
+                });
+                
+                container.appendChild(box);
+                
+                // 添加拖拽功能
+                makeDraggable(box);
+                
+                // 添加调整大小功能
+                addResizeHandles(box);
+            });
+            
+            // 渲染交集区域并创建按钮
+            renderIntersections(overlapButtonsContainer);
+        }
+
+        // 创建教师项目
+        function createTeacherItem(teacher) {
+            const teacherItem = document.createElement('div');
+            teacherItem.className = 'teacher-item';
+            teacherItem.dataset.id = teacher.id;
+            teacherItem.style.position = 'relative';
+            teacherItem.style.zIndex = '15';
+            
+            const nameContainer = document.createElement('div');
+            nameContainer.style.display = 'flex';
+            nameContainer.style.alignItems = 'center';
+            nameContainer.style.gap = '10px';
+            
+            const name = document.createElement('div');
+            name.className = 'teacher-name';
+            name.textContent = teacher.name;
+            nameContainer.appendChild(name);
+            
+            // 显示评分
+            const rating = document.createElement('div');
+            rating.style.fontSize = '12px';
+            rating.style.color = '#666';
+            rating.textContent = `评分: ${teacher.rating || 0}`;
+            nameContainer.appendChild(rating);
+            
+            // 显示收藏状态
+            const favorite = document.createElement('div');
+            favorite.style.color = teacher.favorite ? '#e74c3c' : '#ccc';
+            favorite.innerHTML = teacher.favorite ? '<i class="fas fa-heart"></i>' : '<i class="far fa-heart"></i>';
+            favorite.style.cursor = 'pointer';
+            favorite.style.position = 'relative';
+            favorite.style.zIndex = '25';
+            favorite.onclick = function(e) {
+                e.stopPropagation();
+                teacher.favorite = !teacher.favorite;
+                favorite.style.color = teacher.favorite ? '#e74c3c' : '#ccc';
+                favorite.innerHTML = teacher.favorite ? '<i class="fas fa-heart"></i>' : '<i class="far fa-heart"></i>';
+                saveData();
+            };
+            nameContainer.appendChild(favorite);
+            
+            // 显示职称图标
+            if (teacher.title) {
+                const titleBadge = document.createElement('div');
+                titleBadge.style.padding = '2px 6px';
+                titleBadge.style.borderRadius = '10px';
+                titleBadge.style.fontSize = '10px';
+                titleBadge.style.fontWeight = 'bold';
+                titleBadge.style.color = 'white';
+                titleBadge.style.backgroundColor = getTitleColor(teacher.title);
+                titleBadge.textContent = teacher.title;
+                nameContainer.appendChild(titleBadge);
+            }
+            
+            teacherItem.appendChild(nameContainer);
+            
+            const infoBtn = document.createElement('button');
+            infoBtn.className = 'teacher-info-btn';
+            infoBtn.innerHTML = '<i class="fas fa-plus"></i>';
+            infoBtn.style.position = 'relative';
+            infoBtn.style.zIndex = '25';
+            infoBtn.style.cursor = 'pointer';
+            infoBtn.onclick = function(e) {
+                e.stopPropagation();
+                openTeacherModal(teacher);
+            };
+            teacherItem.appendChild(infoBtn);
+            
+            return teacherItem;
+        }
+
+        // 渲染交集区域
+        function renderIntersections(overlapButtonsContainer) {
+            const container = document.getElementById('visualization');
+            
+            // 生成所有可能的院系组合
+            const facultyCombinations = generateCombinations(data.faculties.map(f => f.id));
+            
+            // 包含所有组合，包括单个院系的组合
+            const allCombinations = facultyCombinations;
+            
+            // 过滤出多个院系的组合（重叠区域）
+            const overlapCombinations = allCombinations.filter(comb => comb.length > 1);
+            
+            // 为每个重叠区域创建按钮
+            overlapCombinations.forEach(combination => {
+                // 找到属于这个组合的教师
+                const teachersInIntersection = data.teachers.filter(teacher => {
+                    // 检查教师是否属于组合中的所有院系（不管是否还属于其他院系）
+                    return combination.every(facultyId => teacher.faculties.includes(facultyId));
+                });
+                
+                if (teachersInIntersection.length > 0) {
+                    // 计算交集区域的位置和大小
+                    const boxElements = combination.map(id => 
+                        document.querySelector(`.faculty-box[data-id="${id}"]`)
+                    );
+                    
+                    if (boxElements.every(el => el)) {
+                        // 计算交集区域的位置和大小（取所有方块的重叠区域）
+                        let minX = Infinity, minY = Infinity;
+                        let maxX = -Infinity, maxY = -Infinity;
+                        
+                        boxElements.forEach(el => {
+                            const rect = el.getBoundingClientRect();
+                            const containerRect = container.getBoundingClientRect();
+                            const left = rect.left - containerRect.left;
+                            const top = rect.top - containerRect.top;
+                            const right = left + rect.width;
+                            const bottom = top + rect.height;
+                            
+                            minX = Math.min(minX, right);
+                            minY = Math.min(minY, bottom);
+                            maxX = Math.max(maxX, left);
+                            maxY = Math.max(maxY, top);
+                        });
+                        
+                        // 计算交集区域的宽度和高度
+                        const width = Math.max(0, minX - maxX);
+                        const height = Math.max(0, minY - maxY);
+                        
+                        // 只有当宽度和高度大于0时才渲染
+                        if (width > 20 && height > 20) {
+                            // 创建交集区域
+                            const intersection = document.createElement('div');
+                            intersection.className = 'intersection-area';
+                            intersection.style.left = `${maxX}px`;
+                            intersection.style.top = `${maxY}px`;
+                            intersection.style.width = `${width}px`;
+                            intersection.style.height = `${height}px`;
+                            
+                            // 计算交集区域的颜色（混合所有院系的颜色）
+                            const colors = combination.map(id => {
+                                const faculty = data.faculties.find(f => f.id === id);
+                                return faculty.color;
+                            });
+                            intersection.style.backgroundColor = mixColors(colors);
+                            
+                            // 只对多个院系的组合显示标签，单个院系的组合不显示标签（避免与院系框体重复）
+                            if (combination.length > 1) {
+                                const label = document.createElement('div');
+                                label.className = 'intersection-label';
+                                const facultyNames = combination.map(id => {
+                                    const faculty = data.faculties.find(f => f.id === id);
+                                    return faculty.name;
+                                });
+                                label.textContent = facultyNames.join(' ∩ ');
+                                intersection.appendChild(label);
+                            }
+                            
+                            // 添加教师列表（用于弹窗显示）
+                            const teacherList = document.createElement('div');
+                            teacherList.className = 'teacher-list';
+                            teacherList.style.display = 'none'; // 默认不显示
+                            
+                            teachersInIntersection.forEach(teacher => {
+                                const teacherItem = createTeacherItem(teacher);
+                                teacherList.appendChild(teacherItem);
+                            });
+                            
+                            intersection.appendChild(teacherList);
+                            container.appendChild(intersection);
+                            
+                            // 为重叠区域创建按钮
+                            const facultyNames = combination.map(id => {
+                                const faculty = data.faculties.find(f => f.id === id);
+                                return faculty.name;
+                            });
+                            const buttonText = facultyNames.join(' ∩ ');
+                            
+                            const overlapButton = document.createElement('button');
+                            overlapButton.className = 'overlap-button';
+                            overlapButton.textContent = buttonText;
+                            overlapButton.style.display = 'block';
+                            overlapButton.style.width = '100%';
+                            overlapButton.style.marginBottom = '5px';
+                            overlapButton.style.padding = '8px';
+                            overlapButton.style.fontSize = '12px';
+                            overlapButton.style.cursor = 'pointer';
+                            overlapButton.style.backgroundColor = '#3498db';
+                            overlapButton.style.color = 'white';
+                            overlapButton.style.border = '1px solid #2980b9';
+                            overlapButton.style.borderRadius = '3px';
+                            overlapButton.style.transition = 'background-color 0.3s';
+                            
+                            overlapButton.onmouseover = function() {
+                                this.style.backgroundColor = '#2980b9';
+                            };
+                            
+                            overlapButton.onmouseout = function() {
+                                this.style.backgroundColor = '#3498db';
+                            };
+                            
+                            // 添加点击事件来打开新窗口查看教师列表
+                            overlapButton.onclick = function(e) {
+                                e.stopPropagation();
+                                // 创建弹窗
+                                const modal = document.createElement('div');
+                                modal.className = 'modal';
+                                modal.style.display = 'block';
+                                modal.style.position = 'fixed';
+                                modal.style.zIndex = '1000';
+                                modal.style.left = '0';
+                                modal.style.top = '0';
+                                modal.style.width = '100%';
+                                modal.style.height = '100%';
+                                modal.style.overflow = 'auto';
+                                modal.style.backgroundColor = 'rgba(0,0,0,0.4)';
+                                
+                                const modalContent = document.createElement('div');
+                                modalContent.style.backgroundColor = '#fefefe';
+                                modalContent.style.margin = '15% auto';
+                                modalContent.style.padding = '20px';
+                                modalContent.style.border = '1px solid #888';
+                                modalContent.style.width = '80%';
+                                modalContent.style.maxWidth = '500px';
+                                modalContent.style.borderRadius = '8px';
+                                
+                                const closeBtn = document.createElement('span');
+                                closeBtn.className = 'close';
+                                closeBtn.innerHTML = '&times;';
+                                closeBtn.style.color = '#aaa';
+                                closeBtn.style.float = 'right';
+                                closeBtn.style.fontSize = '28px';
+                                closeBtn.style.fontWeight = 'bold';
+                                closeBtn.style.cursor = 'pointer';
+                                modalContent.appendChild(closeBtn);
+                                
+                                const title = document.createElement('h2');
+                                title.textContent = buttonText + ' 教师列表';
+                                modalContent.appendChild(title);
+                                
+                                const listContainer = document.createElement('div');
+                                listContainer.style.maxHeight = '400px';
+                                listContainer.style.overflowY = 'auto';
+                                
+                                // 复制教师列表到弹窗
+                                teachersInIntersection.forEach(teacher => {
+                                    const teacherItem = createTeacherItem(teacher);
+                                    listContainer.appendChild(teacherItem);
+                                });
+                                
+                                modalContent.appendChild(listContainer);
+                                modal.appendChild(modalContent);
+                                document.body.appendChild(modal);
+                                
+                                // 关闭弹窗
+                                closeBtn.onclick = function() {
+                                    modal.style.display = 'none';
+                                    document.body.removeChild(modal);
+                                };
+                                
+                                // 点击弹窗外部关闭
+                                window.onclick = function(event) {
+                                    if (event.target === modal) {
+                                        modal.style.display = 'none';
+                                        document.body.removeChild(modal);
+                                    }
+                                };
+                            };
+                            
+                            overlapButtonsContainer.appendChild(overlapButton);
+                        }
+                    }
+                }
+            });
+        }
+
+        // 生成所有可能的组合
+        function generateCombinations(arr) {
+            const result = [];
+            
+            function backtrack(start, current) {
+                if (current.length > 0) {
+                    result.push([...current]);
+                }
+                
+                for (let i = start; i < arr.length; i++) {
+                    current.push(arr[i]);
+                    backtrack(i + 1, current);
+                    current.pop();
+                }
+            }
+            
+            backtrack(0, []);
+            return result;
+        }
+
+        // 混合颜色
+        function mixColors(colors) {
+            let r = 0, g = 0, b = 0, a = 0;
+            
+            colors.forEach(color => {
+                // 解析 rgba 颜色
+                const match = color.match(/rgba$(\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)$/);
+                if (match) {
+                    r += parseInt(match[1]);
+                    g += parseInt(match[2]);
+                    b += parseInt(match[3]);
+                    a += parseFloat(match[4]);
+                }
+            });
+            
+            const count = colors.length;
+            r = Math.floor(r / count);
+            g = Math.floor(g / count);
+            b = Math.floor(b / count);
+            a = a / count;
+            
+            return `rgba(${r}, ${g}, ${b}, ${a})`;
+        }
+
+        // 使元素可拖拽
+        function makeDraggable(element) {
+            element.onmousedown = function(e) {
+                // 防止点击调整大小手柄、教师信息按钮、展开/收起按钮、修改按钮或爱心图标时触发拖拽
+                if (e.target.classList.contains('resize-handle') || 
+                    e.target.classList.contains('teacher-info-btn') || 
+                    e.target.closest('.teacher-info-btn') ||
+                    e.target.classList.contains('toggle-btn') ||
+                    e.target.closest('.toggle-btn') ||
+                    e.target.classList.contains('edit-faculty-btn') ||
+                    e.target.closest('.edit-faculty-btn') ||
+                    e.target.closest('.teacher-item') ||
+                    e.target.closest('.far') ||
+                    e.target.closest('.fas')) {
+                    return;
+                }
+                
+                draggedElement = element;
+                const rect = element.getBoundingClientRect();
+                // 计算鼠标在元素内的相对坐标
+                offsetX = e.clientX - rect.left;
+                offsetY = e.clientY - rect.top;
+                e.preventDefault();
+            };
+        }
+
+        // 鼠标移动事件
+        document.onmousemove = function(e) {
+            if (draggedElement) {
+                const container = document.getElementById('visualization');
+                const containerRect = container.getBoundingClientRect();
+                let x = e.clientX - containerRect.left - offsetX;
+                let y = e.clientY - containerRect.top - offsetY;
+                
+                // 获取拖动元素的尺寸
+                const draggedRect = draggedElement.getBoundingClientRect();
+                const draggedWidth = draggedRect.width;
+                const draggedHeight = draggedRect.height;
+                
+                // 限制在白板范围内
+                const containerWidth = containerRect.width;
+                const containerHeight = containerRect.height;
+                
+                // 限制x坐标
+                if (x < 0) x = 0;
+                if (x + draggedWidth > containerWidth) x = containerWidth - draggedWidth;
+                
+                // 限制y坐标
+                if (y < 0) y = 0;
+                if (y + draggedHeight > containerHeight) y = containerHeight - draggedHeight;
+                
+                draggedElement.style.left = `${x}px`;
+                draggedElement.style.top = `${y}px`;
+                
+                // 更新数据中的位置
+                const facultyId = parseInt(draggedElement.dataset.id);
+                const faculty = data.faculties.find(f => f.id === facultyId);
+                if (faculty) {
+                    faculty.x = x;
+                    faculty.y = y;
+                }
+            }
+        };
+
+        // 添加调整大小的功能
+        function addResizeHandles(box) {
+            const handles = box.querySelectorAll('.resize-handle');
+            handles.forEach(handle => {
+                handle.onmousedown = function(e) {
+                    e.preventDefault();
+                    const facultyId = parseInt(handle.dataset.facultyId);
+                    const faculty = data.faculties.find(f => f.id === facultyId);
+                    if (!faculty) return;
+                    
+                    const startX = e.clientX;
+                    const startY = e.clientY;
+                    const startWidth = faculty.width;
+                    const startHeight = faculty.height;
+                    const startXPos = faculty.x;
+                    const startYPos = faculty.y;
+                    const position = handle.dataset.position;
+                    
+                    const originalOnMouseMove = document.onmousemove;
+                    const originalOnMouseUp = document.onmouseup;
+                    
+                    document.onmousemove = function(e) {
+                        const dx = e.clientX - startX;
+                        const dy = e.clientY - startY;
+                        
+                        let newWidth = startWidth;
+                        let newHeight = startHeight;
+                        let newX = startXPos;
+                        let newY = startYPos;
+                        
+                        switch (position) {
+                            case 'top-left':
+                                newWidth = startWidth - dx;
+                                newHeight = startHeight - dy;
+                                newX = startXPos + dx;
+                                newY = startYPos + dy;
+                                break;
+                            case 'top-right':
+                                newWidth = startWidth + dx;
+                                newHeight = startHeight - dy;
+                                newY = startYPos + dy;
+                                break;
+                            case 'bottom-left':
+                                newWidth = startWidth - dx;
+                                newHeight = startHeight + dy;
+                                newX = startXPos + dx;
+                                break;
+                            case 'bottom-right':
+                                newWidth = startWidth + dx;
+                                newHeight = startHeight + dy;
+                                break;
+                            case 'top':
+                                newHeight = startHeight - dy;
+                                newY = startYPos + dy;
+                                break;
+                            case 'bottom':
+                                newHeight = startHeight + dy;
+                                break;
+                            case 'left':
+                                newWidth = startWidth - dx;
+                                newX = startXPos + dx;
+                                break;
+                            case 'right':
+                                newWidth = startWidth + dx;
+                                break;
+                        }
+                        
+                        // 限制最小尺寸
+                        if (newWidth < 100) newWidth = 100;
+                        if (newHeight < 100) newHeight = 100;
+                        
+                        // 获取容器尺寸
+                        const container = document.getElementById('visualization');
+                        const containerRect = container.getBoundingClientRect();
+                        const containerWidth = containerRect.width;
+                        const containerHeight = containerRect.height;
+                        
+                        // 限制不能超出白板范围
+                        if (newX < 0) {
+                            newWidth = newWidth + newX;
+                            newX = 0;
+                        }
+                        if (newY < 0) {
+                            newHeight = newHeight + newY;
+                            newY = 0;
+                        }
+                        if (newX + newWidth > containerWidth) {
+                            newWidth = containerWidth - newX;
+                        }
+                        if (newY + newHeight > containerHeight) {
+                            newHeight = containerHeight - newY;
+                        }
+                        
+                        // 再次检查最小尺寸
+                        if (newWidth < 100) newWidth = 100;
+                        if (newHeight < 100) newHeight = 100;
+                        
+                        // 更新UI
+                        box.style.width = `${newWidth}px`;
+                        box.style.height = `${newHeight}px`;
+                        box.style.left = `${newX}px`;
+                        box.style.top = `${newY}px`;
+                        
+                        // 更新数据
+                        faculty.width = newWidth;
+                        faculty.height = newHeight;
+                        faculty.x = newX;
+                        faculty.y = newY;
+                    };
+                    
+                    document.onmouseup = function() {
+                        document.onmousemove = originalOnMouseMove;
+                        document.onmouseup = originalOnMouseUp; // 恢复原始的鼠标释放事件处理程序
+                        saveData();
+                        renderVisualization();
+                        // 重置draggedElement，确保释放鼠标后不会继续拖动
+                        draggedElement = null;
+                    };
+                };
+            });
+        }
+
+        // 鼠标释放事件
+        document.onmouseup = function(e) {
+            if (draggedElement) {
+                saveData();
+                renderVisualization();
+                draggedElement = null;
+            }
+        };
+
+        // 打开修改院系信息模态框
+        function openEditFacultyModal(faculty) {
+            const modal = document.getElementById('edit-faculty-modal');
+            const facultyId = document.getElementById('edit-faculty-id');
+            const facultyName = document.getElementById('edit-faculty-name');
+            const facultyDesc = document.getElementById('edit-faculty-desc');
+            
+            facultyId.value = faculty.id;
+            facultyName.value = faculty.name;
+            facultyDesc.value = faculty.description || '';
+            
+            modal.style.display = 'block';
+        }
+
+        // 打开教师模态框
+        function openTeacherModal(teacher = null) {
+            const modal = document.getElementById('teacher-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const teacherId = document.getElementById('teacher-id');
+            const teacherName = document.getElementById('teacher-name');
+            const teacherTitle = document.getElementById('teacher-title');
+            const teacherResearch = document.getElementById('teacher-research');
+            const teacherUrl = document.getElementById('teacher-url');
+            const teacherEmail = document.getElementById('teacher-email');
+            const teacherRating = document.getElementById('teacher-rating');
+            const teacherFavorite = document.getElementById('teacher-favorite');
+            const facultySelector = document.getElementById('faculty-selector');
+            
+            // 重新生成院系选择器，确保显示最新的院系
+            updateFacultySelector();
+            
+            if (teacher) {
+                modalTitle.textContent = '编辑教师';
+                teacherId.value = teacher.id;
+                teacherName.value = teacher.name;
+                teacherTitle.value = teacher.title || '';
+                teacherResearch.value = teacher.research || '';
+                teacherUrl.value = teacher.url || '';
+                teacherEmail.value = teacher.email || '';
+                teacherRating.value = teacher.rating || 0;
+                teacherFavorite.checked = teacher.favorite || false;
+                
+                // 勾选所属院系
+                const checkboxes = facultySelector.querySelectorAll('input[type="checkbox"]');
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = teacher.faculties.includes(parseInt(checkbox.value));
+                });
+            } else {
+                modalTitle.textContent = '添加教师';
+                teacherId.value = '';
+                teacherName.value = '';
+                teacherTitle.value = '';
+                teacherResearch.value = '';
+                teacherUrl.value = '';
+                teacherEmail.value = '';
+                teacherRating.value = 0;
+                teacherFavorite.checked = false;
+                
+                // 清空复选框（默认不选中任何院系）
+                const checkboxes = facultySelector.querySelectorAll('input[type="checkbox"]');
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+            }
+            
+            // 更新爱心图标状态
+            const favoriteIcon = document.getElementById('favorite-icon');
+            if (teacher) {
+                favoriteIcon.innerHTML = teacher.favorite ? '<i class="fas fa-heart"></i>' : '<i class="far fa-heart"></i>';
+                favoriteIcon.style.color = teacher.favorite ? '#e74c3c' : '#ccc';
+            } else {
+                favoriteIcon.innerHTML = '<i class="far fa-heart"></i>';
+                favoriteIcon.style.color = '#ccc';
+            }
+            
+            // 添加爱心图标点击事件
+            favoriteIcon.onclick = function() {
+                const checkbox = document.getElementById('teacher-favorite');
+                checkbox.checked = !checkbox.checked;
+                favoriteIcon.innerHTML = checkbox.checked ? '<i class="fas fa-heart"></i>' : '<i class="far fa-heart"></i>';
+                favoriteIcon.style.color = checkbox.checked ? '#e74c3c' : '#ccc';
+            };
+            
+            modal.style.display = 'block';
+        }
+
+        // 设置事件监听器
+        function setupEventListeners() {
+            // 添加院系
+            document.getElementById('add-faculty-btn').onclick = function() {
+                const name = document.getElementById('new-faculty').value.trim();
+                const description = document.getElementById('new-faculty-desc').value.trim();
+                if (name) {
+                    const newId = Math.max(...data.faculties.map(f => f.id), 0) + 1;
+                    const colors = [
+                        'rgba(52, 152, 219, 0.5)',
+                        'rgba(46, 204, 113, 0.5)',
+                        'rgba(231, 76, 60, 0.5)',
+                        'rgba(155, 89, 182, 0.5)',
+                        'rgba(241, 196, 15, 0.5)',
+                        'rgba(230, 126, 34, 0.5)',
+                        'rgba(41, 128, 185, 0.5)',
+                        'rgba(39, 174, 96, 0.5)'
+                    ];
+                    const color = colors[newId % colors.length];
+                    
+                    data.faculties.push({
+                        id: newId,
+                        name: name,
+                        description: description,
+                        color: color,
+                        x: 100 + (newId * 150) % 800,
+                        y: 200 + Math.floor(newId / 5) * 150,
+                        width: 200,
+                        height: 200
+                    });
+                    
+                    document.getElementById('new-faculty').value = '';
+                    document.getElementById('new-faculty-desc').value = '';
+                    updateFacultySelector();
+                    updateFacultyRemoveDropdown();
+                    updateBatchFacultyDropdown();
+                    updateRankingDropdowns();
+                    saveData();
+                    renderVisualization();
+                    showStatus('院系添加成功', 'success');
+                } else {
+                    showStatus('请输入院系名称', 'error');
+                }
+            };
+            
+            // 删除院系
+            document.getElementById('remove-faculty-btn').onclick = function() {
+                const facultyId = parseInt(document.getElementById('faculty-to-remove').value);
+                if (facultyId) {
+                    // 移除仅属于该院系的教师
+                    data.teachers = data.teachers.filter(teacher => {
+                        if (teacher.faculties.length === 1 && teacher.faculties[0] === facultyId) {
+                            return false;
+                        }
+                        // 从其他教师的院系列表中移除该院系
+                        teacher.faculties = teacher.faculties.filter(id => id !== facultyId);
+                        return true;
+                    });
+                    
+                    // 移除院系
+                    data.faculties = data.faculties.filter(f => f.id !== facultyId);
+                    
+                    updateFacultySelector();
+                    updateFacultyRemoveDropdown();
+                    updateBatchFacultyDropdown();
+                    updateRankingDropdowns();
+                    saveData();
+                    renderVisualization();
+                    showStatus('院系删除成功', 'success');
+                } else {
+                    showStatus('请选择要删除的院系', 'error');
+                }
+            };
+            
+            // 打开教师模态框
+            document.getElementById('add-teacher-btn').onclick = function() {
+                openTeacherModal();
+            };
+            
+            // 教师姓名输入事件，检查是否已存在同名教师
+            document.getElementById('teacher-name').onblur = function() {
+                const name = this.value.trim();
+                if (name) {
+                    const existingTeacher = data.teachers.find(t => t.name === name);
+                    if (existingTeacher) {
+                        // 自动填入已有的教师数据
+                        document.getElementById('teacher-title').value = existingTeacher.title || '';
+                        document.getElementById('teacher-research').value = existingTeacher.research || '';
+                        document.getElementById('teacher-rating').value = existingTeacher.rating || 0;
+                        document.getElementById('teacher-favorite').checked = existingTeacher.favorite || false;
+                        
+                        // 勾选已有的院系
+                        const checkboxes = document.querySelectorAll('#faculty-selector input[type="checkbox"]');
+                        checkboxes.forEach(checkbox => {
+                            checkbox.checked = existingTeacher.faculties.includes(parseInt(checkbox.value));
+                        });
+                        
+                        showStatus('教师已存在，已自动填入数据', 'success');
+                    }
+                }
+            };
+            
+            // 删除教师
+            document.getElementById('delete-teacher-btn').onclick = function() {
+                const teacherId = parseInt(document.getElementById('teacher-id').value);
+                if (teacherId) {
+                    if (confirm('确定要删除这位教师吗？')) {
+                        // 从教师列表中移除
+                        data.teachers = data.teachers.filter(t => t.id !== teacherId);
+                        
+                        saveData();
+                        renderVisualization();
+                        document.getElementById('teacher-modal').style.display = 'none';
+                        showStatus('教师删除成功', 'success');
+                    }
+                } else {
+                    showStatus('请先选择要删除的教师', 'error');
+                }
+            };
+            
+            // 关闭模态框
+            document.querySelector('.close').onclick = function() {
+                document.getElementById('teacher-modal').style.display = 'none';
+            };
+            
+            // 点击模态框外部关闭
+            window.onclick = function(e) {
+                const modal = document.getElementById('teacher-modal');
+                if (e.target === modal) {
+                    modal.style.display = 'none';
+                }
+            };
+            
+            // 提交教师表单
+            document.getElementById('teacher-form').onsubmit = function(e) {
+                e.preventDefault();
+                
+                const id = document.getElementById('teacher-id').value;
+                const name = document.getElementById('teacher-name').value.trim();
+                const title = document.getElementById('teacher-title').value.trim();
+                const research = document.getElementById('teacher-research').value.trim();
+                const url = document.getElementById('teacher-url').value.trim();
+                const email = document.getElementById('teacher-email').value.trim();
+                const rating = parseInt(document.getElementById('teacher-rating').value) || 0;
+                const favorite = document.getElementById('teacher-favorite').checked;
+                
+                // 获取选中的院系
+                const checkboxes = document.querySelectorAll('#faculty-selector input[type="checkbox"]:checked');
+                const faculties = Array.from(checkboxes).map(cb => parseInt(cb.value));
+                
+                if (!name) {
+                    showStatus('请输入教师姓名', 'error');
+                    return;
+                }
+                
+                if (faculties.length === 0) {
+                    showStatus('请至少选择一个院系', 'error');
+                    return;
+                }
+                
+                if (id) {
+                    // 更新教师
+                    const teacher = data.teachers.find(t => t.id === parseInt(id));
+                    if (teacher) {
+                        teacher.name = name;
+                        teacher.faculties = faculties;
+                        teacher.title = title;
+                        teacher.research = research;
+                        teacher.url = url;
+                        teacher.email = email;
+                        teacher.rating = rating;
+                        teacher.favorite = favorite;
+                        showStatus('教师信息更新成功', 'success');
+                    }
+                } else {
+                    // 检查是否已存在同名教师
+                    const existingTeacher = data.teachers.find(t => t.name === name);
+                    if (existingTeacher) {
+                        // 合并院系
+                        const updatedFaculties = [...new Set([...existingTeacher.faculties, ...faculties])];
+                        existingTeacher.faculties = updatedFaculties;
+                        existingTeacher.title = title || existingTeacher.title;
+                        existingTeacher.research = research || existingTeacher.research;
+                        existingTeacher.url = url || existingTeacher.url;
+                        existingTeacher.email = email || existingTeacher.email;
+                        existingTeacher.rating = rating || existingTeacher.rating;
+                        existingTeacher.favorite = existingTeacher.favorite || favorite;
+                        showStatus('教师已存在，已更新所属院系', 'success');
+                    } else {
+                        // 添加新教师
+                        const newId = Math.max(...data.teachers.map(t => t.id), 0) + 1;
+                        data.teachers.push({
+                            id: newId,
+                            name: name,
+                            faculties: faculties,
+                            title: title,
+                            research: research,
+                            url: url,
+                            email: email,
+                            rating: rating,
+                            favorite: favorite
+                        });
+                        showStatus('教师添加成功', 'success');
+                    }
+                }
+                
+                saveData();
+                renderVisualization();
+                document.getElementById('teacher-modal').style.display = 'none';
+            };
+            
+            // 提交修改院系信息表单
+            document.getElementById('edit-faculty-form').onsubmit = function(e) {
+                e.preventDefault();
+                
+                const id = parseInt(document.getElementById('edit-faculty-id').value);
+                const name = document.getElementById('edit-faculty-name').value.trim();
+                const description = document.getElementById('edit-faculty-desc').value.trim();
+                
+                if (!name) {
+                    showStatus('请输入院系名称', 'error');
+                    return;
+                }
+                
+                const faculty = data.faculties.find(f => f.id === id);
+                if (faculty) {
+                    faculty.name = name;
+                    faculty.description = description;
+                    saveData();
+                    renderVisualization();
+                    updateFacultySelector();
+                    updateFacultyRemoveDropdown();
+                    updateBatchFacultyDropdown();
+                    updateRankingDropdowns();
+                    document.getElementById('edit-faculty-modal').style.display = 'none';
+                    showStatus('院系信息更新成功', 'success');
+                }
+            };
+            
+            // 上传文件批量添加教师
+            document.getElementById('upload-file-btn').onclick = function() {
+                const facultyId = parseInt(document.getElementById('batch-faculty').value);
+                const fileInput = document.getElementById('teacher-file');
+                const fileUploadTitle = document.getElementById('file-upload-title').value.trim();
+                
+                if (!facultyId) {
+                    showStatus('请选择要添加教师的院系', 'error');
+                    return;
+                }
+                
+                if (!fileInput.files || fileInput.files.length === 0) {
+                    showStatus('请选择要上传的文件', 'error');
+                    return;
+                }
+                
+                const file = fileInput.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    const content = e.target.result;
+                    const names = content.split('\n').map(name => name.trim()).filter(name => name);
+                    
+                    if (names.length === 0) {
+                        showStatus('文件中没有有效教师姓名', 'error');
+                        return;
+                    }
+                    
+                    let addedCount = 0;
+                    names.forEach(name => {
+                        // 检查教师是否已存在
+                        const existingTeacher = data.teachers.find(t => t.name === name);
+                        if (existingTeacher) {
+                            // 如果教师已存在，添加新院系
+                            let updated = false;
+                            if (!existingTeacher.faculties.includes(facultyId)) {
+                                existingTeacher.faculties.push(facultyId);
+                                updated = true;
+                            }
+                            // 如果指定了职称，覆盖原有职称
+                            if (fileUploadTitle) {
+                                existingTeacher.title = fileUploadTitle;
+                                updated = true;
+                            }
+                            if (updated) {
+                                addedCount++;
+                            }
+                        } else {
+                            // 添加新教师
+                            const newId = Math.max(...data.teachers.map(t => t.id), 0) + 1;
+                            data.teachers.push({
+                                id: newId,
+                                name: name,
+                                faculties: [facultyId],
+                                title: fileUploadTitle,
+                                research: '',
+                                rating: 0,
+                                favorite: false
+                            });
+                            addedCount++;
+                        }
+                    });
+                    
+                    if (addedCount > 0) {
+                        saveData();
+                        renderVisualization();
+                        showStatus(`成功添加 ${addedCount} 名教师`, 'success');
+                        fileInput.value = '';
+                        document.getElementById('file-upload-title').value = '';
+                    } else {
+                        showStatus('所有教师已存在', 'error');
+                    }
+                };
+                
+                reader.onerror = function() {
+                    showStatus('文件读取失败', 'error');
+                };
+                
+                reader.readAsText(file);
+            };
+            
+            // 打开手动输入模态框
+            document.getElementById('manual-input-btn').onclick = function() {
+                const facultyId = parseInt(document.getElementById('batch-faculty').value);
+                if (!facultyId) {
+                    showStatus('请选择要添加教师的院系', 'error');
+                    return;
+                }
+                
+                document.getElementById('batch-modal').style.display = 'block';
+            };
+            
+            // 关闭手动输入模态框
+            document.querySelectorAll('#batch-modal .close')[0].onclick = function() {
+                document.getElementById('batch-modal').style.display = 'none';
+            };
+            
+            // 点击模态框外部关闭
+            window.onclick = function(e) {
+                const modal = document.getElementById('teacher-modal');
+                const batchModal = document.getElementById('batch-modal');
+                if (e.target === modal) {
+                    modal.style.display = 'none';
+                } else if (e.target === batchModal) {
+                    batchModal.style.display = 'none';
+                }
+            };
+            
+            // 批量添加教师
+            document.getElementById('batch-add-btn').onclick = function() {
+                const facultyId = parseInt(document.getElementById('batch-faculty').value);
+                const textarea = document.getElementById('batch-teachers');
+                const content = textarea.value;
+                const batchTitle = document.getElementById('batch-title').value.trim();
+                
+                if (!facultyId) {
+                    showStatus('请选择要添加教师的院系', 'error');
+                    return;
+                }
+                
+                const names = content.split('\n').map(name => name.trim()).filter(name => name);
+                
+                if (names.length === 0) {
+                    showStatus('请输入教师姓名', 'error');
+                    return;
+                }
+                
+                let addedCount = 0;
+                names.forEach(name => {
+                    // 检查教师是否已存在
+                    const existingTeacher = data.teachers.find(t => t.name === name);
+                    if (existingTeacher) {
+                        // 如果教师已存在，添加新院系
+                        let updated = false;
+                        if (!existingTeacher.faculties.includes(facultyId)) {
+                            existingTeacher.faculties.push(facultyId);
+                            updated = true;
+                        }
+                        // 如果指定了职称，覆盖原有职称
+                        if (batchTitle) {
+                            existingTeacher.title = batchTitle;
+                            updated = true;
+                        }
+                        if (updated) {
+                            addedCount++;
+                        }
+                    } else {
+                        // 添加新教师
+                        const newId = Math.max(...data.teachers.map(t => t.id), 0) + 1;
+                        data.teachers.push({
+                            id: newId,
+                            name: name,
+                            faculties: [facultyId],
+                            title: batchTitle,
+                            research: '',
+                            rating: 0,
+                            favorite: false
+                        });
+                        addedCount++;
+                    }
+                });
+                
+                if (addedCount > 0) {
+                    saveData();
+                    renderVisualization();
+                    showStatus(`成功添加 ${addedCount} 名教师`, 'success');
+                    document.getElementById('batch-modal').style.display = 'none';
+                    textarea.value = '';
+                    document.getElementById('batch-title').value = '';
+                } else {
+                    showStatus('所有教师已存在', 'error');
+                }
+            };
+            
+            // 导出数据
+            document.getElementById('export-data-btn').onclick = function() {
+                exportData();
+            };
+            
+            // 加载数据
+            document.getElementById('load-data-btn').onclick = function() {
+                document.getElementById('data-file').click();
+            };
+            
+            // 文件选择事件
+            document.getElementById('data-file').onchange = function(e) {
+                if (e.target.files && e.target.files.length > 0) {
+                    const file = e.target.files[0];
+                    loadDataFromFile(file);
+                }
+            };
+            
+            // 打开使用说明
+            document.getElementById('help-btn').onclick = function() {
+                document.getElementById('help-modal').style.display = 'block';
+            };
+            
+            // 关闭使用说明模态框
+            document.querySelectorAll('#help-modal .close')[0].onclick = function() {
+                document.getElementById('help-modal').style.display = 'none';
+            };
+            
+            // 打开排行榜
+            document.getElementById('ranking-btn').onclick = function() {
+                updateRankingDropdowns();
+                renderRanking();
+                document.getElementById('ranking-modal').style.display = 'block';
+            };
+            
+            // 打开记事本
+            document.getElementById('notepad-btn').onclick = function() {
+                openNotepadList();
+            };
+            
+            // 批量添加文件选择
+            document.getElementById('browse-file-btn').onclick = function() {
+                document.getElementById('teacher-file').click();
+            };
+            
+            // 选择文件按钮悬停效果
+            document.getElementById('browse-file-btn').onmouseover = function() {
+                this.style.backgroundColor = '#2980b9';
+            };
+            
+            document.getElementById('browse-file-btn').onmouseout = function() {
+                this.style.backgroundColor = '#3498db';
+            };
+            
+            // 更新文件名显示
+            document.getElementById('teacher-file').onchange = function() {
+                const fileName = this.files[0] ? this.files[0].name : '未选择文件';
+                document.getElementById('file-name').textContent = fileName;
+            };
+            
+            // 打开搜索模态框
+            document.getElementById('search-btn').onclick = function() {
+                updateSearchDropdowns();
+                renderSearch();
+                document.getElementById('search-modal').style.display = 'block';
+            };
+            
+            // 应用搜索
+            document.getElementById('apply-search-btn').onclick = function() {
+                renderSearch();
+            };
+            
+            // 打开批量删除模态框
+            document.getElementById('batch-delete-btn').onclick = function() {
+                document.getElementById('batch-delete-modal').style.display = 'block';
+            };
+            
+            // 批量删除教师
+            document.getElementById('batch-delete-confirm-btn').onclick = function() {
+                const textarea = document.getElementById('batch-delete-teachers');
+                const content = textarea.value;
+                
+                const names = content.split('\n').map(name => name.trim()).filter(name => name);
+                
+                if (names.length === 0) {
+                    showStatus('请输入教师姓名', 'error');
+                    return;
+                }
+                
+                if (confirm(`确定要删除 ${names.length} 名教师吗？`)) {
+                    let deletedCount = 0;
+                    names.forEach(name => {
+                        const index = data.teachers.findIndex(t => t.name === name);
+                        if (index > -1) {
+                            data.teachers.splice(index, 1);
+                            deletedCount++;
+                        }
+                    });
+                    
+                    if (deletedCount > 0) {
+                        saveData();
+                        renderVisualization();
+                        showStatus(`成功删除 ${deletedCount} 名教师`, 'success');
+                        document.getElementById('batch-delete-modal').style.display = 'none';
+                        textarea.value = '';
+                    } else {
+                        showStatus('没有找到要删除的教师', 'error');
+                    }
+                }
+            };
+            
+            // 应用筛选
+            document.getElementById('apply-filter-btn').onclick = function() {
+                renderRanking();
+            };
+            
+            // 关闭排行榜模态框
+            document.querySelectorAll('#ranking-modal .close')[0].onclick = function() {
+                document.getElementById('ranking-modal').style.display = 'none';
+            };
+            
+            // 关闭修改院系信息模态框
+            document.querySelectorAll('#edit-faculty-modal .close')[0].onclick = function() {
+                document.getElementById('edit-faculty-modal').style.display = 'none';
+            };
+            
+            // 关闭记事本模态框
+            document.querySelectorAll('#notepad-modal .close')[0].onclick = function() {
+                document.getElementById('notepad-modal').style.display = 'none';
+            };
+            
+            // 关闭批量删除模态框
+            document.querySelectorAll('#batch-delete-modal .close')[0].onclick = function() {
+                document.getElementById('batch-delete-modal').style.display = 'none';
+            };
+            
+            // 关闭搜索模态框
+            document.querySelectorAll('#search-modal .close')[0].onclick = function() {
+                document.getElementById('search-modal').style.display = 'none';
+            };
+            
+            // 点击模态框外部关闭
+            window.onclick = function(e) {
+                const modal = document.getElementById('teacher-modal');
+                const batchModal = document.getElementById('batch-modal');
+                const helpModal = document.getElementById('help-modal');
+                const rankingModal = document.getElementById('ranking-modal');
+                const editFacultyModal = document.getElementById('edit-faculty-modal');
+                const notepadModal = document.getElementById('notepad-modal');
+                const batchDeleteModal = document.getElementById('batch-delete-modal');
+                const searchModal = document.getElementById('search-modal');
+                if (e.target === modal) {
+                    modal.style.display = 'none';
+                } else if (e.target === batchModal) {
+                    batchModal.style.display = 'none';
+                } else if (e.target === helpModal) {
+                    helpModal.style.display = 'none';
+                } else if (e.target === rankingModal) {
+                    rankingModal.style.display = 'none';
+                } else if (e.target === editFacultyModal) {
+                    editFacultyModal.style.display = 'none';
+                } else if (e.target === notepadModal) {
+                    notepadModal.style.display = 'none';
+                } else if (e.target === batchDeleteModal) {
+                    batchDeleteModal.style.display = 'none';
+                } else if (e.target === searchModal) {
+                    searchModal.style.display = 'none';
+                }
+            };
+            
+            // 记事本按钮
+            document.getElementById('save-notepad-btn').onclick = saveNotepad;
+            document.getElementById('clear-notepad-btn').onclick = clearNotepad;
+        }
+        
+        // 切换下拉列表显示/隐藏
+        function toggleDropdown(id) {
+            const dropdown = document.getElementById(id);
+            dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        // 切换院系选择状态
+        function toggleFacultySelection(facultyId) {
+            // 获取当前选中的院系
+            let selectedFaculties = JSON.parse(document.getElementById('ranking-faculty').value || '[]');
+            
+            if (facultyId === '') {
+                // 点击"全部院系"，清空选择
+                selectedFaculties = [];
+            } else {
+                // 切换选中状态
+                const index = selectedFaculties.indexOf(parseInt(facultyId));
+                if (index > -1) {
+                    // 已选中，移除
+                    selectedFaculties.splice(index, 1);
+                } else {
+                    // 未选中，添加
+                    selectedFaculties.push(parseInt(facultyId));
+                }
+            }
+            
+            // 保存选中状态
+            document.getElementById('ranking-faculty').value = JSON.stringify(selectedFaculties);
+            
+            // 更新下拉列表显示
+            updateDropdownDisplay();
+            
+            // 关闭下拉列表
+            document.getElementById('faculty-dropdown').style.display = 'none';
+        }
+        
+        // 更新下拉列表显示
+        function updateDropdownDisplay() {
+            const selectedFaculties = JSON.parse(document.getElementById('ranking-faculty').value || '[]');
+            const facultySelected = document.getElementById('faculty-selected');
+            
+            if (selectedFaculties.length === 0) {
+                facultySelected.textContent = '全部院系';
+            } else if (selectedFaculties.length === 1) {
+                // 显示选中的院系名称
+                const faculty = data.faculties.find(f => f.id === selectedFaculties[0]);
+                facultySelected.textContent = faculty ? faculty.name : '院系';
+            } else {
+                // 显示选中数量
+                facultySelected.textContent = `已选择 ${selectedFaculties.length} 个院系`;
+            }
+            
+            // 更新下拉列表中选项的选中状态
+            const dropdownItems = document.querySelectorAll('#faculty-dropdown .dropdown-item');
+            dropdownItems.forEach(item => {
+                const value = item.getAttribute('data-value');
+                if (value === '') {
+                    // "全部院系"选项
+                    item.classList.toggle('selected', selectedFaculties.length === 0);
+                } else {
+                    // 其他院系选项
+                    item.classList.toggle('selected', selectedFaculties.includes(parseInt(value)));
+                }
+            });
+        }
+        
+        // 页面加载完成后初始化
+        window.onload = function() {
+            loadData();
+            renderVisualization();
+            updateFacultyRemoveDropdown();
+            updateBatchFacultyDropdown();
+            updateRankingDropdowns();
+            updateDropdownDisplay();
+            setupEventListeners();
+        };
+    </script>
+</body>
+</html>
